@@ -5,6 +5,7 @@ export interface CreateUserInput {
   email: string;
   phone: string;
   password: string;
+  salt: string;
   role: string;
 }
 
