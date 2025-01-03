@@ -3,12 +3,15 @@ import bodyparser from "body-parser";
 import mongoose from "mongoose";
 import cors from "cors";
 import { MONGO_URI } from "./config";
+import { UserRoute } from "./routes";
 
 const app = express();
 
 app.use(cors());
 app.use(bodyparser.json());
 app.use(bodyparser.urlencoded({ extended: true }));
+
+app.use("/user", UserRoute);
 
 mongoose
   .connect(MONGO_URI)
