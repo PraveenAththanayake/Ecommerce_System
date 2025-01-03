@@ -1,14 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { AuthPayload } from "../dto";
 import { ValidateSignature } from "../utility";
-
-declare global {
-  namespace Express {
-    interface Request {
-      user?: AuthPayload;
-    }
-  }
-}
 
 export const Authenticate = async (
   req: Request,

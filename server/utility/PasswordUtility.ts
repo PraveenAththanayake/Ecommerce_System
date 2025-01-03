@@ -28,15 +28,20 @@ export const ValidateSignature = async (req: Request) => {
   const signature = req.get("Authorization");
 
   if (signature) {
-    const payload = (await jwt.verify(
-      signature.split(" ")[1],
-      APP_SECRET
-    )) as AuthPayload;
+    try {
+      const payload = (await jwt.verify(
+        signature.split(" ")[1],
+        APP_SECRET
+      )) as AuthPayload;
 
-    req.user = payload;
-    console.log("User role from token:", req.user.role);
+      req.user = payload;
+      console.log("User role from token:", req.user.role);
 
-    return true;
+      return true;
+    } catch (error) {
+      console.error("Token verification failed:", error);
+      return false;
+    }
   }
   return false;
 };
