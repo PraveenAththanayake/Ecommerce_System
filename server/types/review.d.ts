@@ -1,4 +1,4 @@
-import { Document } from "mongoose";
+import { Document, Schema } from "mongoose";
 
 export interface IReview extends Document {
   user: Schema.Types.ObjectId;

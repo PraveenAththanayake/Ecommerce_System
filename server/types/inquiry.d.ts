@@ -1,5 +1,4 @@
-import { Document } from "mongoose";
-import { Schema } from "mongoose";
+import { Document, Schema } from "mongoose";
 
 export interface IInquiry extends Document {
   user: Schema.Types.ObjectId;
