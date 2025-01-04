@@ -11,7 +11,8 @@ export const Authenticate = async (
   if (validate) {
     next();
   } else {
-    return res.status(401).json({ message: "Unauthorized" });
+    res.status(401).json({ message: "Unauthorized" });
+    return;
   }
 };
 

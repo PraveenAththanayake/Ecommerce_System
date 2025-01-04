@@ -97,12 +97,15 @@ export const UserLogin = async (req: Request, res: Response) => {
         role: existingUser.role,
         message: "Login successful",
       });
+      return;
     } else {
       res.status(400).json({ message: "Invalid password" });
+      return;
     }
   }
 
-  res.json({ message: "User not found" });
+  res.status(404).json({ message: "User not found" });
+  return;
 };
 
 export const GetUserProfile = async (req: Request, res: Response) => {
