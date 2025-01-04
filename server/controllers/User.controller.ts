@@ -91,6 +91,7 @@ export const UserLogin = async (req: Request, res: Response) => {
         role: existingUser.role,
       });
 
+      console.log("Login successful for user:", existingUser.email);
       res.json({
         _id: existingUser._id as string,
         token: signature,
