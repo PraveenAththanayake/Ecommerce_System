@@ -8,4 +8,6 @@ export interface IProduct extends Document {
   imageUrl: string;
   slug: string;
   category: string;
+  numReviews?: number;
+  rating?: number;
 }

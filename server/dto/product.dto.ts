@@ -6,4 +6,6 @@ export interface ProductDto {
   category: string;
   slug: string;
   imageUrl: string;
+  numReviews?: number;
+  rating?: number;
 }

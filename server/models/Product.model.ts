@@ -10,6 +10,8 @@ const ProductSchema = new Schema(
     imageUrl: { type: String, required: true },
     slug: { type: String, required: true, unique: true },
     category: { type: String, required: true },
+    numReviews: { type: Number },
+    rating: { type: Number },
   },
   {
     timestamps: true,
