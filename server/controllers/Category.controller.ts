@@ -17,7 +17,7 @@ export const CreateCategory = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const { name, slug } = <CreateCategoryInput>req.body;
+  const { name, slug, featured } = <CreateCategoryInput>req.body;
 
   const existingCategory = await FindCategory("", name);
 
@@ -29,6 +29,7 @@ export const CreateCategory = async (
   const createCategory = await Category.create({
     name: name,
     slug: slug,
+    featured: featured,
   });
 
   res.json(createCategory);
@@ -60,13 +61,14 @@ export const GetCategoryById = async (req: Request, res: Response) => {
 // Update Category function
 export const UpdateCategory = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { name, slug } = <CreateCategoryInput>req.body;
+  const { name, slug, featured } = <CreateCategoryInput>req.body;
 
   const category = await FindCategory(id);
 
   if (category != null) {
     category.name = name;
     category.slug = slug;
+    category.featured = featured;
 
     await category.save();
     res.json(category);
