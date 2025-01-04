@@ -3,7 +3,7 @@ import bodyparser from "body-parser";
 import mongoose from "mongoose";
 import cors from "cors";
 import { MONGO_URI } from "./config";
-import { UserRoute } from "./routes";
+import { CategoryRoute, UserRoute } from "./routes";
 
 const app = express();
 
@@ -12,6 +12,7 @@ app.use(bodyparser.json());
 app.use(bodyparser.urlencoded({ extended: true }));
 
 app.use("/user", UserRoute);
+app.use("/category", CategoryRoute);
 
 mongoose
   .connect(MONGO_URI)

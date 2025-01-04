@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { Category } from "../models";
 import { CreateCategoryInput } from "../dto";
+import mongoose from "mongoose";
 
 // FindCategory function
 export const FindCategory = async (id: string | undefined, name?: string) => {
@@ -47,7 +48,7 @@ export const GetCategories = async (req: Request, res: Response) => {
 // Get Category by ID function
 export const GetCategoryById = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const category = await FindCategory(id);
+  const category = await Category.findOne({ _id: id });
 
   if (category != null) {
     res.json(category);
