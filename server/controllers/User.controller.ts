@@ -115,6 +115,7 @@ export const GetUserProfile = async (req: Request, res: Response) => {
   if (user) {
     const existingUser = await FindUser(user._id);
     res.json(existingUser);
+    return;
   }
 
   res.json({ message: "User not found" });

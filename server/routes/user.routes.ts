@@ -8,6 +8,7 @@ import {
   UpdateUserProfile,
   DeleteUser,
 } from "../controllers";
+import { Authenticate } from "../middlewares";
 
 const router = express.Router();
 
@@ -24,12 +25,12 @@ router.get("/users", GetUsers);
 router.get("/users/:id", GetUserById);
 
 // Get Current User Profile (Protected Route)
-router.get("/profile", GetUserProfile);
+router.get("/profile", Authenticate, GetUserProfile);
 
 // Update User Profile (Protected Route)
-router.put("/profile", UpdateUserProfile);
+router.put("/profile", Authenticate, UpdateUserProfile);
 
 // Delete Current User (Protected Route)
-router.delete("/profile", DeleteUser);
+router.delete("/profile", Authenticate, DeleteUser);
 
 export { router as UserRoute };
