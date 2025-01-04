@@ -9,6 +9,7 @@ import {
   UserRoute,
   OrderRoute,
   ProductRoute,
+  ReviewRoute,
 } from "./routes";
 
 const app = express();
@@ -22,6 +23,7 @@ app.use("/category", CategoryRoute);
 app.use("/inquiry", InquiryRoute);
 app.use("/order", OrderRoute);
 app.use("/product", ProductRoute);
+app.use("/review", ReviewRoute);
 
 mongoose
   .connect(MONGO_URI)
