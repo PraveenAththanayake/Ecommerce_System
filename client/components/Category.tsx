@@ -1,65 +1,42 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-
-const categories = [
-  {
-    name: "New Arrivals",
-    description: "Latest fashion trends and styles",
-    itemCount: "2.5k",
-    image: "/assets/products/product1.jpg",
-    featured: true,
-    tag: "Trending",
-  },
-  {
-    name: "Clothing",
-    description: "Premium everyday essentials",
-    itemCount: "1.8k",
-    image: "/assets/products/product2.jpg",
-    tag: "Popular",
-  },
-  {
-    name: "Accessories",
-    description: "Complete your perfect look",
-    itemCount: "950",
-    image: "/assets/products/product3.jpg",
-    tag: "New",
-  },
-  {
-    name: "Footwear",
-    description: "Step into comfort and style",
-    itemCount: "1.2k",
-    image: "/assets/products/product4.jpg",
-    tag: "Best Seller",
-  },
-  {
-    name: "Active Wear",
-    description: "Performance meets fashion",
-    itemCount: "780",
-    image: "/assets/products/product1.jpg",
-    tag: "Featured",
-  },
-  {
-    name: "Collections",
-    description: "Curated sets for every occasion",
-    itemCount: "450",
-    image: "/assets/products/product2.jpg",
-    featured: true,
-    tag: "Limited",
-  },
-];
+import { ICategory } from "@/types";
+import { getCategories } from "@/services";
 
 const CategorySection = () => {
+  const [categories, setCategories] = useState<ICategory[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch categories when the component mounts
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await getCategories();
+        const categoriesWithItemCount = response.map((category: ICategory) => ({
+          ...category,
+          itemCount: category.itemCount || "0",
+        }));
+        setCategories(categoriesWithItemCount);
+      } catch {
+        setError("Error fetching categories");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>{error}</div>;
+
   return (
     <section className="py-12 lg:py-20 bg-background relative overflow-hidden">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 -z-10 opacity-5">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px]" />
-      </div>
-
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-8 lg:mb-12">
           <div className="space-y-2">
@@ -85,9 +62,7 @@ const CategorySection = () => {
           {categories.map((category, index) => (
             <Card
               key={index}
-              className={`group overflow-hidden transition-all duration-300 hover:shadow-lg ${
-                category.featured ? "sm:col-span-2 lg:col-span-1" : ""
-              }`}
+              className={`group overflow-hidden transition-all duration-300 hover:shadow-lg`}
             >
               <CardContent className="p-0">
                 <a href="#" className="block relative">
@@ -106,7 +81,7 @@ const CategorySection = () => {
                         variant="secondary"
                         className="w-fit backdrop-blur-sm bg-background/30"
                       >
-                        {category.tag}
+                        {category.slug}
                       </Badge>
 
                       <div className="space-y-2">
