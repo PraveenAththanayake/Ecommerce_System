@@ -33,6 +33,7 @@ export const CreateCategory = async (
   });
 
   res.json(createCategory);
+  return;
 };
 
 // Get Categories function
@@ -41,8 +42,10 @@ export const GetCategories = async (req: Request, res: Response) => {
 
   if (categories != null) {
     res.json(categories);
+    return;
   } else {
     res.json({ message: "No categories found" });
+    return;
   }
 };
 
@@ -53,8 +56,10 @@ export const GetCategoryById = async (req: Request, res: Response) => {
 
   if (category != null) {
     res.json(category);
+    return;
   } else {
     res.json({ message: "Category not found" });
+    return;
   }
 };
 
@@ -73,8 +78,10 @@ export const UpdateCategory = async (req: Request, res: Response) => {
 
     await category.save();
     res.json(category);
+    return;
   } else {
     res.json({ message: "Category not found" });
+    return;
   }
 };
 
@@ -86,7 +93,9 @@ export const DeleteCategory = async (req: Request, res: Response) => {
   if (category != null) {
     await Category.deleteOne({ _id: id });
     res.json({ message: "Category deleted" });
+    return;
   } else {
     res.json({ message: "Category not found" });
+    return;
   }
 };
