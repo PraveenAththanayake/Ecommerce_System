@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import { Category } from "../models";
 import { CreateCategoryInput } from "../dto";
-import mongoose from "mongoose";
 
 // FindCategory function
 export const FindCategory = async (id: string | undefined, name?: string) => {
@@ -17,7 +16,7 @@ export const CreateCategory = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const { name, slug, featured } = <CreateCategoryInput>req.body;
+  const { name, slug, image, description } = <CreateCategoryInput>req.body;
 
   const existingCategory = await FindCategory("", name);
 
@@ -29,7 +28,8 @@ export const CreateCategory = async (
   const createCategory = await Category.create({
     name: name,
     slug: slug,
-    featured: featured,
+    image: image,
+    description: description,
   });
 
   res.json(createCategory);
@@ -61,14 +61,15 @@ export const GetCategoryById = async (req: Request, res: Response) => {
 // Update Category function
 export const UpdateCategory = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { name, slug, featured } = <CreateCategoryInput>req.body;
+  const { name, slug, image, description } = <CreateCategoryInput>req.body;
 
   const category = await FindCategory(id);
 
   if (category != null) {
     category.name = name;
     category.slug = slug;
-    category.featured = featured;
+    category.image = image;
+    category.description = description;
 
     await category.save();
     res.json(category);
