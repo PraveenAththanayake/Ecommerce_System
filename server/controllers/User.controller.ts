@@ -46,6 +46,7 @@ export const CreateUser = async (
   });
 
   res.json(createUser);
+  return;
 };
 
 export const GetUsers = async (req: Request, res: Response) => {
@@ -53,8 +54,10 @@ export const GetUsers = async (req: Request, res: Response) => {
 
   if (users != null) {
     res.json(users);
+    return;
   } else {
     res.json({ message: "No users found" });
+    return;
   }
 };
 
@@ -65,8 +68,10 @@ export const GetUserById = async (req: Request, res: Response) => {
 
   if (user != null) {
     res.json(user);
+    return;
   } else {
     res.json({ message: "User not found" });
+    return;
   }
 };
 
@@ -119,6 +124,7 @@ export const GetUserProfile = async (req: Request, res: Response) => {
   }
 
   res.json({ message: "User not found" });
+  return;
 };
 
 export const UpdateUserProfile = async (req: Request, res: Response) => {
@@ -137,11 +143,14 @@ export const UpdateUserProfile = async (req: Request, res: Response) => {
 
       const savedResult = await existingUser.save();
       res.json(savedResult);
+      return;
     }
     res.json(existingUser);
+    return;
   }
 
   res.json({ message: "User not found" });
+  return;
 };
 
 export const DeleteUser = async (req: Request, res: Response) => {
@@ -153,7 +162,9 @@ export const DeleteUser = async (req: Request, res: Response) => {
     if (existingUser != null) {
       await existingUser.deleteOne();
       res.json({ message: "User deleted" });
+      return;
     }
     res.json({ message: "User not found" });
+    return;
   }
 };
