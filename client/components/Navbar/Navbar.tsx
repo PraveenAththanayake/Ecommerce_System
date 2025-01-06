@@ -26,6 +26,7 @@ import { TopBar } from "../Topbar";
 import { Logo } from "./Logo";
 import { useRouter } from "next/navigation";
 import { logoutUser } from "@/services";
+import { useUser } from "@/context/UserContext";
 
 const menuItems = [
   {
@@ -122,6 +123,7 @@ const SearchBar = () => (
 
 const RightSideIcons = () => {
   const router = useRouter();
+  const { user, loading } = useUser();
 
   const handleLogout = async () => {
     try {
@@ -131,6 +133,11 @@ const RightSideIcons = () => {
       console.error("Logout error:", error);
     }
   };
+
+  const userInitials =
+    user?.firstName && user?.lastName
+      ? user.firstName[0].toUpperCase() + user.lastName[0].toUpperCase()
+      : "??";
 
   return (
     <div className="flex items-center space-x-1 sm:space-x-2">
@@ -176,16 +183,26 @@ const RightSideIcons = () => {
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="hidden sm:flex">
             <Avatar className="h-8 w-8">
-              <AvatarImage src="https://github.com/shadcn.png" />
-              <AvatarFallback>CN</AvatarFallback>
+              {user?.avatar ? (
+                <AvatarImage src={user.avatar} />
+              ) : (
+                <AvatarFallback>
+                  {loading ? "..." : userInitials}
+                </AvatarFallback>
+              )}
             </Avatar>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
           <div className="flex items-center justify-start gap-2 p-2">
             <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium">John Doe</p>
-              <p className="text-xs text-muted-foreground">john@example.com</p>
+              <p className="text-sm font-medium">
+                {(user?.firstName?.charAt(0).toUpperCase() ?? "") +
+                  (user?.firstName?.slice(1) ?? "")}{" "}
+                {(user?.lastName?.charAt(0).toUpperCase() ?? "") +
+                  (user?.lastName?.slice(1) ?? "")}
+              </p>
+              <p className="text-xs text-muted-foreground">{user?.email}</p>
             </div>
           </div>
           <DropdownMenuSeparator />

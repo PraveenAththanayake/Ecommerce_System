@@ -1,47 +1,64 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { getUserProfile } from "@/services";
-import { useRouter } from "next/navigation";
-import { IUser } from "@/types";
+"use client";
 
-interface UserContextProps {
-  user: IUser | null;
-  loading: boolean;
-  error: string | null;
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import { getUserProfile } from "@/services";
+
+interface UserProfile {
+  firstName: string;
+  lastName: string;
+  email: string;
+  avatar?: string;
 }
 
-const UserContext = createContext<UserContextProps | undefined>(undefined);
+interface UserContextType {
+  user: UserProfile | null;
+  loading: boolean;
+  error: string | null;
+  refetchUser: () => Promise<void>;
+}
 
-export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
-  const [user, setUser] = useState<IUser | null>(null);
+const UserContext = createContext<UserContextType | undefined>(undefined);
+
+export const UserProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
+
+  const fetchUserProfile = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getUserProfile();
+      setUser(data);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to fetch user profile"
+      );
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchUserProfile = async () => {
-      try {
-        const userData = await getUserProfile();
-        setUser(userData);
-      } catch (err) {
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError("Failed to fetch user profile");
-        }
-        // Redirect to login if unauthorized
-        router.push("/login");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchUserProfile();
-  }, [router]);
+  }, []);
 
   return (
-    <UserContext.Provider value={{ user, loading, error }}>
+    <UserContext.Provider
+      value={{
+        user,
+        loading,
+        error,
+        refetchUser: fetchUserProfile,
+      }}
+    >
       {children}
     </UserContext.Provider>
   );

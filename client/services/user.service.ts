@@ -11,11 +11,7 @@ const api = axios.create({
 // Add request interceptor to add token to all requests
 api.interceptors.request.use((config) => {
   // Get token from cookie
-  const cookies = document.cookie.split(";");
-  const tokenCookie = cookies.find((cookie) =>
-    cookie.trim().startsWith("token=")
-  );
-  const token = tokenCookie ? tokenCookie.split("=")[1].trim() : null;
+  const token = Cookies.get("token");
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -45,7 +41,11 @@ export const loginUser = async (loginData: IUserLogin) => {
 
     if (response.data.token) {
       // Set token in cookie
-      document.cookie = `token=${response.data.token}; path=/; max-age=86400; samesite=lax`;
+      Cookies.set("token", response.data.token, {
+        path: "/",
+        maxAge: 86400,
+        sameSite: "lax",
+      });
 
       // Set default authorization header
       api.defaults.headers.common[
@@ -60,10 +60,18 @@ export const loginUser = async (loginData: IUserLogin) => {
   }
 };
 
-// Updated getUserProfile to use stored token
+// Updated getUserProfile to use stored token from cookie
 export const getUserProfile = async () => {
   try {
     console.log("GetUserProfile - Making request");
+    const token = Cookies.get("token");
+    if (!token) {
+      throw new Error("No token found, please login first.");
+    }
+
+    // Set token for the request
+    api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
     const response = await api.get("/profile");
     console.log("GetUserProfile - Response:", response.data);
     return response.data;
