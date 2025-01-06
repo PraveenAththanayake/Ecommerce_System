@@ -30,9 +30,8 @@ import {
 } from "@/services";
 import { getCategories } from "@/services";
 import { ICategory, IProduct } from "@/types";
-import { ProductCard } from "@/components/admin/ProductCard";
-import { ProductForm } from "@/components/admin/ProductForm";
-import { FilterPanel } from "@/components/admin/ProductFilterPanel";
+import { ProductCard } from "@/components/admin/product/ProductCard";
+import { ProductForm } from "@/components/admin/product/ProductForm";
 
 interface FilterState {
   category: string;
