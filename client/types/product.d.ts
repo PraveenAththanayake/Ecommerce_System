@@ -40,3 +40,7 @@ export interface ProductFormProps {
   onSubmit: () => void;
   isEditing: boolean;
 }
+
+export interface CartItem extends IProduct {
+  quantity: number;
+}
