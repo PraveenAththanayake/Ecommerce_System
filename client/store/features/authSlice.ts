@@ -11,7 +11,7 @@ interface AuthState {
 
 const initialState: AuthState = {
   user: null,
-  token: typeof window !== "undefined" ? localStorage.getItem("token") : null,
+  token: null,
   isAuthenticated: false,
   isLoading: false,
   error: null,
@@ -21,16 +21,10 @@ const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    setCredentials: (
-      state,
-      action: PayloadAction<{ user: IUser; token: string }>
-    ) => {
+    setCredentials: (state, action) => {
       state.user = action.payload.user;
       state.token = action.payload.token;
       state.isAuthenticated = true;
-      if (typeof window !== "undefined") {
-        localStorage.setItem("token", action.payload.token);
-      }
     },
     setUser: (state, action: PayloadAction<IUser>) => {
       state.user = action.payload;
@@ -46,10 +40,8 @@ const authSlice = createSlice({
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
-      state.error = null;
-      if (typeof window !== "undefined") {
-        localStorage.removeItem("token");
-      }
+      // Clear cookie on logout
+      document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT";
     },
   },
 });
