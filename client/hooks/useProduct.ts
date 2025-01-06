@@ -31,13 +31,6 @@ export const useProducts = () => {
     initialize();
   }, []);
 
-  // Calculate stock count for each category
-  const getStockCountForCategory = (Category: string): number => {
-    return products
-      .filter((product) => product.category === Category)
-      .reduce((acc, product) => acc + product.countInStock, 0);
-  };
-
   const fetchProducts = async () => {
     try {
       setLoading(true);
@@ -79,6 +72,5 @@ export const useProducts = () => {
     error,
     filters,
     setFilters,
-    getStockCountForCategory,
   };
 };

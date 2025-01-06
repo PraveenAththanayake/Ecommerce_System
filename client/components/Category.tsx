@@ -6,12 +6,28 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
+import { useMemo } from "react";
 import { useProducts } from "@/hooks/useProduct";
 
 const CategorySection = () => {
-  const { categories, getStockCountForCategory, loading, error } =
-    useProducts();
+  const { categories, products, loading, error } = useProducts();
   const router = useRouter();
+
+  // Calculate product counts using useMemo
+  const productCounts = useMemo(() => {
+    const counts: { [key: string]: number } = {};
+
+    if (categories.length && products.length) {
+      categories.forEach((category) => {
+        counts[category.slug] = products.filter(
+          (product) =>
+            product.category.toLowerCase() === category.name.toLowerCase()
+        ).length;
+      });
+    }
+
+    return counts;
+  }, [categories, products]);
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>{error}</div>;
@@ -46,7 +62,7 @@ const CategorySection = () => {
           {categories.slice(0, 6).map((category) => (
             <Card
               key={category._id}
-              className={`group overflow-hidden transition-all duration-300 hover:shadow-lg`}
+              className="group overflow-hidden transition-all duration-300 hover:shadow-lg"
             >
               <CardContent className="p-0">
                 <a href="#" className="block relative">
@@ -77,8 +93,7 @@ const CategorySection = () => {
                         </p>
                         <div className="flex items-center justify-between pt-2">
                           <span className="text-white/90 text-sm">
-                            {getStockCountForCategory(category.name)} items in
-                            stock
+                            {productCounts[category.slug] || 0} products
                           </span>
                           <Button
                             size="sm"
