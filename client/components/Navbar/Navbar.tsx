@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Search, ShoppingCart, Menu, User, Heart, Bell } from "lucide-react";
+import { Search, ShoppingCart, Menu, User, Heart, Bell, X } from "lucide-react";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -27,6 +27,14 @@ import { Logo } from "./Logo";
 import { useRouter } from "next/navigation";
 import { logoutUser } from "@/services";
 import { useUser } from "@/context/UserContext";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState } from "@/store/store";
+import {
+  removeFromCart,
+  updateCartItemQuantity,
+} from "@/store/features/cartSlice";
+import { removeFromWishlist } from "@/store/features/wishlistSlice";
+import Image from "next/image";
 
 const menuItems = [
   {
@@ -65,8 +73,184 @@ const useScroll = () => {
   return isScrolled;
 };
 
+const CartDropdown = () => {
+  const dispatch = useDispatch();
+  const cartItems = useSelector((state: RootState) => state.cart.items);
+  const total = cartItems.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
+
+  const handleRemoveItem = (id: string) => {
+    dispatch(removeFromCart(id));
+  };
+
+  const handleUpdateQuantity = (id: string, quantity: number) => {
+    if (quantity > 0) {
+      dispatch(updateCartItemQuantity({ id, quantity }));
+    } else {
+      dispatch(removeFromCart(id));
+    }
+  };
+
+  const router = useRouter();
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="relative">
+          <ShoppingCart className="h-5 w-5" />
+          {cartItems.length > 0 && (
+            <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center">
+              {cartItems.reduce((sum, item) => sum + item.quantity, 0)}
+            </Badge>
+          )}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-80">
+        <div className="p-4">
+          <h3 className="font-medium mb-4">
+            Shopping Cart (
+            {cartItems.reduce((sum, item) => sum + item.quantity, 0)} items)
+          </h3>
+          {cartItems.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Your cart is empty</p>
+          ) : (
+            <>
+              <div className="space-y-3 max-h-96 overflow-auto">
+                {cartItems.map((item) => (
+                  <div key={item._id} className="flex items-center gap-3">
+                    <div className="h-16 w-16 bg-secondary rounded">
+                      <Image
+                        width={64}
+                        height={64}
+                        src={item.imageUrl || "/api/placeholder/64/64"}
+                        alt={item.name}
+                        className="w-full h-full object-cover rounded"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">{item.name}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <button
+                          className="text-sm px-2 bg-secondary rounded"
+                          onClick={() =>
+                            handleUpdateQuantity(item._id, item.quantity - 1)
+                          }
+                        >
+                          -
+                        </button>
+                        <span className="text-sm">{item.quantity}</span>
+                        <button
+                          className="text-sm px-2 bg-secondary rounded"
+                          onClick={() =>
+                            handleUpdateQuantity(item._id, item.quantity + 1)
+                          }
+                        >
+                          +
+                        </button>
+                        <span className="text-sm text-muted-foreground ml-2">
+                          ${(item.price * item.quantity).toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleRemoveItem(item._id)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 pt-4 border-t">
+                <div className="flex justify-between mb-4">
+                  <span className="font-medium">Total:</span>
+                  <span className="font-medium">${total.toFixed(2)}</span>
+                </div>
+                <Button
+                  className="w-full"
+                  onClick={() => router.push("/order")}
+                >
+                  Checkout
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+
+const WishlistDropdown = () => {
+  const dispatch = useDispatch();
+  const wishlistItems = useSelector((state: RootState) => state.wishlist.items);
+
+  const handleRemoveFromWishlist = (id: string) => {
+    dispatch(removeFromWishlist(id));
+  };
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="hidden sm:flex relative">
+          <Heart className="h-5 w-5" />
+          {wishlistItems.length > 0 && (
+            <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center">
+              {wishlistItems.length}
+            </Badge>
+          )}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-80">
+        <div className="p-4">
+          <h3 className="font-medium mb-4">
+            Wishlist ({wishlistItems.length} items)
+          </h3>
+          {wishlistItems.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Your wishlist is empty
+            </p>
+          ) : (
+            <div className="space-y-3 max-h-96 overflow-auto">
+              {wishlistItems.map((item) => (
+                <div key={item._id} className="flex items-center gap-3">
+                  <div className="h-16 w-16 bg-secondary rounded">
+                    <Image
+                      width={64}
+                      height={64}
+                      src={item.imageUrl || "/api/placeholder/64/64"}
+                      alt={item.name}
+                      className="w-full h-full object-cover rounded"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{item.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      ${item.price}
+                    </p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleRemoveFromWishlist(item._id)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+
 const DesktopNavigation = () => (
-  <div className="hidden lg:block flex-1 ml-8 ">
+  <div className="hidden lg:block flex-1 ml-8">
     <NavigationMenu>
       <NavigationMenuList>
         {menuItems.map((item) => (
@@ -128,7 +312,7 @@ const RightSideIcons = () => {
   const handleLogout = async () => {
     try {
       logoutUser();
-      router.push("/login"); // Redirect to login page after logout
+      router.push("/login");
     } catch (error) {
       console.error("Logout error:", error);
     }
@@ -158,12 +342,7 @@ const RightSideIcons = () => {
         </SheetContent>
       </Sheet>
 
-      <Button variant="ghost" size="icon" className="hidden sm:flex relative">
-        <Heart className="h-5 w-5" />
-        <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center">
-          2
-        </Badge>
-      </Button>
+      <WishlistDropdown />
 
       <Button variant="ghost" size="icon" className="hidden sm:flex relative">
         <Bell className="h-5 w-5" />
@@ -172,12 +351,7 @@ const RightSideIcons = () => {
         </Badge>
       </Button>
 
-      <Button variant="ghost" size="icon" className="relative">
-        <ShoppingCart className="h-5 w-5" />
-        <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center">
-          3
-        </Badge>
-      </Button>
+      <CartDropdown />
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -231,13 +405,18 @@ const RightSideIcons = () => {
               <div className="space-y-4 py-4">
                 <div className="flex items-center gap-4 px-4 py-2">
                   <Avatar>
-                    <AvatarImage src="https://github.com/shadcn.png" />
-                    <AvatarFallback>CN</AvatarFallback>
+                    {user?.avatar ? (
+                      <AvatarImage src={user.avatar} />
+                    ) : (
+                      <AvatarFallback>{userInitials}</AvatarFallback>
+                    )}
                   </Avatar>
                   <div>
-                    <p className="text-sm font-medium">John Doe</p>
+                    <p className="text-sm font-medium">
+                      {user?.firstName} {user?.lastName}
+                    </p>
                     <p className="text-xs text-muted-foreground">
-                      john@example.com
+                      {user?.email}
                     </p>
                   </div>
                 </div>
