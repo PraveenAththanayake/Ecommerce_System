@@ -271,7 +271,11 @@ const CategoryProducts = () => {
                         <div className="grid grid-cols-2 gap-2">
                           <Button
                             onClick={() =>
-                              router.push(`/products/${product._id}`)
+                              router.push(
+                                `/categories/${currentCategory.toLowerCase()}/${
+                                  product._id
+                                }`
+                              )
                             }
                             variant="outline"
                             size="sm"

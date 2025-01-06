@@ -9,6 +9,7 @@ interface IProduct {
   slug: string;
   numReviews: number;
   rating: number;
+  reviews?: IReview[];
 }
 export interface ProductFormData {
   name: string;
