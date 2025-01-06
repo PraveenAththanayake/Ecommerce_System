@@ -11,7 +11,7 @@ export function middleware(request: NextRequest) {
 
   const isProtectedPath =
     request.nextUrl.pathname.startsWith("/admin") ||
-    request.nextUrl.pathname.startsWith("/profile") ||
+    request.nextUrl.pathname.startsWith("/categories") ||
     request.nextUrl.pathname.startsWith("/dashboard");
 
   console.log("Middleware - Path info:", {
@@ -37,6 +37,7 @@ export const config = {
   matcher: [
     "/login",
     "/register",
+    "/categories/:path*",
     "/dashboard/:path*",
     "/profile/:path*",
     "/admin/:path*",
