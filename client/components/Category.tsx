@@ -1,36 +1,17 @@
-import React, { useEffect, useState } from "react";
+"use client";
+
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ICategory } from "@/types";
-import { getCategories } from "@/services";
+import { useRouter } from "next/navigation";
+import { useProducts } from "@/hooks/useProduct";
 
 const CategorySection = () => {
-  const [categories, setCategories] = useState<ICategory[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Fetch categories when the component mounts
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await getCategories();
-        const categoriesWithItemCount = response.map((category: ICategory) => ({
-          ...category,
-          itemCount: category.itemCount || "0",
-        }));
-        setCategories(categoriesWithItemCount);
-      } catch {
-        setError("Error fetching categories");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCategories();
-  }, []);
+  const { categories, getStockCountForCategory, loading, error } =
+    useProducts();
+  const router = useRouter();
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>{error}</div>;
@@ -52,6 +33,9 @@ const CategorySection = () => {
             variant="outline"
             size="default"
             className="mt-4 md:mt-0 group"
+            onClick={() => {
+              router.push("/categories");
+            }}
           >
             View All Categories
             <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -59,9 +43,9 @@ const CategorySection = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-          {categories.map((category, index) => (
+          {categories.slice(0, 6).map((category) => (
             <Card
-              key={index}
+              key={category._id}
               className={`group overflow-hidden transition-all duration-300 hover:shadow-lg`}
             >
               <CardContent className="p-0">
@@ -93,7 +77,8 @@ const CategorySection = () => {
                         </p>
                         <div className="flex items-center justify-between pt-2">
                           <span className="text-white/90 text-sm">
-                            {category.itemCount} items
+                            {getStockCountForCategory(category.name)} items in
+                            stock
                           </span>
                           <Button
                             size="sm"
