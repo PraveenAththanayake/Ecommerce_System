@@ -16,19 +16,30 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const router = useRouter();
   const { token } = useSelector((state: RootState) => state.auth);
 
-  const { data: profile, error } = useGetProfileQuery(undefined, {
+  const {
+    data: profile,
+    error,
+    isLoading,
+  } = useGetProfileQuery(undefined, {
     skip: !token,
+    pollingInterval: 900000,
   });
 
   useEffect(() => {
     if (profile) {
       dispatch(setUser(profile));
     }
+
     if (error) {
+      console.error("Auth error:", error);
       dispatch(logout());
       router.push("/login");
     }
   }, [profile, error, dispatch, router]);
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return <>{children}</>;
 };

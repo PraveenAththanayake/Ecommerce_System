@@ -31,15 +31,27 @@ const Login = () => {
     e.preventDefault();
     try {
       const userData = await login({ email, password }).unwrap();
-      dispatch(
-        setCredentials({
-          user: userData,
-          token: userData.token,
-        })
-      );
-      router.push("/");
+      console.log("Login response:", userData);
+
+      if (userData.token) {
+        // Store token in cookie
+        document.cookie = `token=${userData.token}; path=/; max-age=86400; samesite=lax`;
+
+        // Store in Redux
+        dispatch(
+          setCredentials({
+            user: userData,
+            token: userData.token,
+          })
+        );
+
+        // Verify cookie was set
+        console.log("Cookies after login:", document.cookie);
+
+        router.push("/");
+      }
     } catch (err) {
-      console.error("Failed to login:", err);
+      console.error("Login failed:", err);
     }
   };
 
