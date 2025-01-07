@@ -65,14 +65,20 @@ export const GetReviews = async (
   try {
     const { productId } = req.params;
 
+    if (!productId) {
+      res.status(400).json({ message: "Product ID is required" });
+      return;
+    }
+
     const reviews = await Review.find({ product: productId })
       .populate("user", "name email")
       .sort({ createdAt: -1 });
 
+    // Return empty array instead of error when no reviews found
     res.status(200).json({
       success: true,
       count: reviews.length,
-      reviews,
+      reviews: reviews || [],
     });
   } catch (error) {
     next(error);
@@ -113,6 +119,7 @@ export const UpdateReview = async (
   try {
     const { id } = req.params;
     const { rating, comment } = req.body;
+    const user = req.user;
 
     const review = await Review.findById(id);
 
@@ -121,10 +128,29 @@ export const UpdateReview = async (
       return;
     }
 
+    // Check if the user owns the review
+    if (!user || review.user.toString() !== user._id.toString()) {
+      res.status(403).json({ message: "Not authorized to update this review" });
+      return;
+    }
+
     review.rating = rating || review.rating;
     review.comment = comment || review.comment;
 
     await review.save();
+
+    // Update product rating after review update
+    const productDetails = await Product.findById(review.product);
+    if (productDetails) {
+      const allReviews = await Review.find({ product: review.product });
+      const averageRating =
+        allReviews.reduce((acc, curr) => acc + curr.rating, 0) /
+        allReviews.length;
+
+      productDetails.rating = averageRating;
+      productDetails.numReviews = allReviews.length;
+      await productDetails.save();
+    }
 
     res.status(200).json({
       success: true,

@@ -13,7 +13,7 @@ const router = express.Router();
 
 router.post("/create", Authenticate, CreateReview);
 
-router.get("/get", GetReviews);
+router.get("/product/:productId", GetReviews);
 
 router.get("/get/:id", GetReviewById);
 
