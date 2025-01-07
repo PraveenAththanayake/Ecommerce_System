@@ -103,7 +103,7 @@ export const updateOrderStatus = async (
 
 export const deleteOrder = async (orderId: string) => {
   try {
-    const response = await api.delete(`/update/${orderId}`);
+    const response = await api.delete(`/delete/${orderId}`);
     return response.data;
   } catch (error) {
     handleAxiosError(error as AxiosError);
