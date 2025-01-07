@@ -82,6 +82,7 @@ export default function ProductDetailPage() {
         loadProductReviews(foundProduct._id);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.productId, products]);
 
   const loadProductReviews = async (productId: string) => {

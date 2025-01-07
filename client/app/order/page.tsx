@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -8,19 +8,30 @@ import { Trash2, Plus, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+
 import {
   removeFromCart,
   updateQuantity,
   clearCart,
 } from "@/store/features/cartSlice";
-import { CartItem } from "@/types";
+import { CartItem, IOrder } from "@/types";
 import { RootState } from "@/store/store";
+import { useOrder } from "@/hooks/useOrder";
+import { OrderHistory } from "@/components/order/OrderHistory";
+import { OrderSummary } from "@/components/order/OrderSummary";
 
 const OrderPage = () => {
   const router = useRouter();
   const dispatch = useDispatch();
+  const { handleCreateOrder, orders, loading, error, handleGetUserOrders } =
+    useOrder();
   const cartItems = useSelector((state: RootState) => state.cart.items);
   const [orderTotal, setOrderTotal] = useState(0);
+
+  useEffect(() => {
+    handleGetUserOrders();
+  }, [handleGetUserOrders]);
 
   useEffect(() => {
     const total = cartItems.reduce(
@@ -40,29 +51,51 @@ const OrderPage = () => {
     dispatch(removeFromCart(itemId));
   };
 
-  const handleCheckout = async () => {
-    // Add your checkout logic here
-    dispatch(clearCart());
-    router.push("/checkout/success");
+  const handleCheckout = async (orderData: Omit<IOrder, "user">) => {
+    try {
+      await handleCreateOrder(orderData);
+      dispatch(clearCart());
+      router.push("/order");
+    } catch (error) {
+      console.error("Checkout failed:", error);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-lg">Loading...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-red-500">Error: {error}</p>
+      </div>
+    );
+  }
 
   if (cartItems.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center space-y-4">
+      <div className="max-w-7xl mx-auto px-4 py-16 mt-12 lg:mt-20">
+        <div className="text-center space-y-4 mb-12">
           <h2 className="text-2xl font-bold">Your cart is empty</h2>
           <p className="text-muted-foreground">Add some items to get started</p>
           <Button onClick={() => router.push("/categories")}>
             Continue Shopping
           </Button>
         </div>
+        <Separator className="my-8" />
+        {orders && <OrderHistory orders={orders} />}
       </div>
     );
   }
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-16 mt-12 lg:mt-20">
-      <h1 className="text-3xl font-bold mb-8">Your Orders</h1>
+      <h1 className="text-3xl font-bold mb-8">Your Cart</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-4">
@@ -138,36 +171,14 @@ const OrderPage = () => {
           ))}
         </div>
 
-        <div className="lg:col-span-1">
-          <Card>
-            <CardContent className="p-6 space-y-4">
-              <h2 className="text-xl font-bold">Order Summary</h2>
+        <div className="lg:col-span-1 space-y-8">
+          <OrderSummary
+            orderTotal={orderTotal}
+            cartItems={cartItems}
+            onCheckout={handleCheckout}
+          />
 
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span>Subtotal</span>
-                  <span>${orderTotal.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Shipping</span>
-                  <span>FREE</span>
-                </div>
-                <div className="flex justify-between font-bold text-lg pt-2 border-t">
-                  <span>Total</span>
-                  <span>${orderTotal.toFixed(2)}</span>
-                </div>
-              </div>
-
-              <Button
-                className="w-full"
-                size="lg"
-                onClick={handleCheckout}
-                disabled={cartItems.length === 0}
-              >
-                Proceed to Checkout
-              </Button>
-            </CardContent>
-          </Card>
+          <OrderHistory orders={orders || []} />
         </div>
       </div>
     </div>

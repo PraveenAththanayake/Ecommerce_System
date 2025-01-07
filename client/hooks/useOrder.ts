@@ -1,210 +1,227 @@
 import { useState, useCallback } from "react";
+import { toast } from "sonner";
 import { IOrder } from "@/types";
 import {
   createOrder,
-  getAllOrders,
-  getOrder,
   getUserOrders,
   updateOrder,
   updateOrderStatus,
   deleteOrder,
+  getAllOrders,
+  getOrder,
 } from "@/services";
 
-interface OrderState {
-  orders: IOrder[];
-  currentOrder: IOrder | null;
-  loading: boolean;
-  error: string | null;
-  count: number;
-}
+export const useOrder = () => {
+  const [orders, setOrders] = useState<IOrder[] | null>(null);
+  const [currentOrder, setCurrentOrder] = useState<IOrder | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
-interface UseOrderReturn extends OrderState {
-  createNewOrder: (orderData: Omit<IOrder, "user">) => Promise<void>;
-  fetchAllOrders: () => Promise<void>;
-  fetchOrder: (orderId: string) => Promise<void>;
-  fetchUserOrders: () => Promise<void>;
-  updateOrderDetails: (
-    orderId: string,
-    updateData: Partial<IOrder>
-  ) => Promise<void>;
-  updateStatus: (
-    orderId: string,
-    status: IOrder["orderStatus"]
-  ) => Promise<void>;
-  removeOrder: (orderId: string) => Promise<void>;
-  resetState: () => void;
-}
-
-export const useOrder = (): UseOrderReturn => {
-  const [state, setState] = useState<OrderState>({
-    orders: [],
-    currentOrder: null,
-    loading: false,
-    error: null,
-    count: 0,
-  });
-
-  const setLoading = (loading: boolean) => {
-    setState((prev) => ({ ...prev, loading, error: null }));
-  };
-
-  const setError = (error: string) => {
-    setState((prev) => ({ ...prev, loading: false, error }));
-  };
-
-  const resetState = useCallback(() => {
-    setState({
-      orders: [],
-      currentOrder: null,
-      loading: false,
-      error: null,
-      count: 0,
-    });
+  const clearError = useCallback(() => {
+    setError(null);
   }, []);
 
-  const createNewOrder = useCallback(
-    async (orderData: Omit<IOrder, "user">) => {
+  const handleCreateOrder = useCallback(
+    async (orderData: Omit<IOrder, "user">): Promise<IOrder> => {
       setLoading(true);
+      setError(null);
       try {
         const response = await createOrder(orderData);
-        setState((prev) => ({
-          ...prev,
-          currentOrder: response.order,
-          loading: false,
-        }));
-      } catch (error) {
-        setError(
-          error instanceof Error ? error.message : "Failed to create order"
+        const newOrder = response.order;
+
+        setOrders((prevOrders) =>
+          prevOrders ? [...prevOrders, newOrder] : [newOrder]
         );
+
+        toast.success("Order created successfully");
+        return newOrder;
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to create order";
+        setError(errorMessage);
+        toast.error(errorMessage);
+        throw err;
+      } finally {
+        setLoading(false);
       }
     },
     []
   );
 
-  const fetchAllOrders = useCallback(async () => {
+  const handleGetOrders = useCallback(async (): Promise<IOrder[]> => {
     setLoading(true);
+    setError(null);
     try {
       const response = await getAllOrders();
-      setState((prev) => ({
-        ...prev,
-        orders: response.orders,
-        count: response.count,
-        loading: false,
-      }));
-    } catch (error) {
-      setError(
-        error instanceof Error ? error.message : "Failed to fetch orders"
-      );
+      const fetchedOrders = response.orders;
+      setOrders(fetchedOrders);
+      return fetchedOrders;
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to fetch orders";
+      setError(errorMessage);
+      toast.error(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
     }
   }, []);
 
-  const fetchOrder = useCallback(async (orderId: string) => {
-    setLoading(true);
-    try {
-      const response = await getOrder(orderId);
-      setState((prev) => ({
-        ...prev,
-        currentOrder: response.order,
-        loading: false,
-      }));
-    } catch (error) {
-      setError(
-        error instanceof Error ? error.message : "Failed to fetch order"
-      );
-    }
-  }, []);
+  const handleGetOrderById = useCallback(
+    async (id: string): Promise<IOrder> => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await getOrder(id);
+        const fetchedOrder = response.order;
+        setCurrentOrder(fetchedOrder);
+        return fetchedOrder;
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to fetch order";
+        setError(errorMessage);
+        toast.error(errorMessage);
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
 
-  const fetchUserOrders = useCallback(async () => {
+  const handleGetUserOrders = useCallback(async (): Promise<IOrder[]> => {
     setLoading(true);
+    setError(null);
     try {
       const response = await getUserOrders();
-      setState((prev) => ({
-        ...prev,
-        orders: response.orders,
-        count: response.count,
-        loading: false,
-      }));
-    } catch (error) {
-      setError(
-        error instanceof Error ? error.message : "Failed to fetch user orders"
-      );
+      const userOrders = response.orders;
+      setOrders(userOrders);
+      return userOrders;
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to fetch user orders";
+      setError(errorMessage);
+      toast.error(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
     }
   }, []);
 
-  const updateOrderDetails = useCallback(
-    async (orderId: string, updateData: Partial<IOrder>) => {
+  const handleUpdateOrder = useCallback(
+    async (id: string, updateData: Partial<IOrder>): Promise<IOrder> => {
       setLoading(true);
+      setError(null);
       try {
-        const response = await updateOrder(orderId, updateData);
-        setState((prev) => ({
-          ...prev,
-          currentOrder: response.order,
-          orders: prev.orders.map((order) =>
-            order._id === orderId ? response.order : order
-          ),
-          loading: false,
-        }));
-      } catch (error) {
-        setError(
-          error instanceof Error ? error.message : "Failed to update order"
+        const response = await updateOrder(id, updateData);
+        const updatedOrder = response.order;
+
+        setOrders((prevOrders) =>
+          prevOrders
+            ? prevOrders.map((order) =>
+                order._id === id ? { ...order, ...updatedOrder } : order
+              )
+            : null
         );
+
+        if (currentOrder?._id === id) {
+          setCurrentOrder(updatedOrder);
+        }
+
+        toast.success("Order updated successfully");
+        return updatedOrder;
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to update order";
+        setError(errorMessage);
+        toast.error(errorMessage);
+        throw err;
+      } finally {
+        setLoading(false);
       }
     },
-    []
+    [currentOrder]
   );
 
-  const updateStatus = useCallback(
-    async (orderId: string, status: IOrder["orderStatus"]) => {
+  const handleUpdateOrderStatus = useCallback(
+    async (id: string, orderStatus: IOrder["orderStatus"]): Promise<IOrder> => {
       setLoading(true);
+      setError(null);
       try {
-        const response = await updateOrderStatus(orderId, status);
-        setState((prev) => ({
-          ...prev,
-          currentOrder: response.order,
-          orders: prev.orders.map((order) =>
-            order._id === orderId ? response.order : order
-          ),
-          loading: false,
-        }));
-      } catch (error) {
-        setError(
-          error instanceof Error
-            ? error.message
-            : "Failed to update order status"
+        const response = await updateOrderStatus(id, orderStatus);
+        const updatedOrder = response.order;
+
+        setOrders((prevOrders) =>
+          prevOrders
+            ? prevOrders.map((order) =>
+                order._id === id
+                  ? { ...order, orderStatus: updatedOrder.orderStatus }
+                  : order
+              )
+            : null
         );
+
+        if (currentOrder?._id === id) {
+          setCurrentOrder(updatedOrder);
+        }
+
+        toast.success("Order status updated successfully");
+        return updatedOrder;
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to update order status";
+        setError(errorMessage);
+        toast.error(errorMessage);
+        throw err;
+      } finally {
+        setLoading(false);
       }
     },
-    []
+    [currentOrder]
   );
 
-  const removeOrder = useCallback(async (orderId: string) => {
-    setLoading(true);
-    try {
-      await deleteOrder(orderId);
-      setState((prev) => ({
-        ...prev,
-        orders: prev.orders.filter((order) => order._id !== orderId),
-        currentOrder:
-          prev.currentOrder?._id === orderId ? null : prev.currentOrder,
-        count: prev.count - 1,
-        loading: false,
-      }));
-    } catch (error) {
-      setError(
-        error instanceof Error ? error.message : "Failed to delete order"
-      );
-    }
-  }, []);
+  const handleDeleteOrder = useCallback(
+    async (id: string): Promise<void> => {
+      setLoading(true);
+      setError(null);
+      try {
+        await deleteOrder(id);
+
+        setOrders((prevOrders) =>
+          prevOrders ? prevOrders.filter((order) => order._id !== id) : null
+        );
+
+        if (currentOrder?._id === id) {
+          setCurrentOrder(null);
+        }
+
+        toast.success("Order deleted successfully");
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to delete order";
+        setError(errorMessage);
+        toast.error(errorMessage);
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [currentOrder]
+  );
 
   return {
-    ...state,
-    createNewOrder,
-    fetchAllOrders,
-    fetchOrder,
-    fetchUserOrders,
-    updateOrderDetails,
-    updateStatus,
-    removeOrder,
-    resetState,
+    orders,
+    currentOrder,
+    loading,
+    error,
+    handleCreateOrder,
+    handleGetOrders,
+    handleGetOrderById,
+    handleGetUserOrders,
+    handleUpdateOrder,
+    handleUpdateOrderStatus,
+    handleDeleteOrder,
+    clearError,
+    setCurrentOrder,
   };
 };

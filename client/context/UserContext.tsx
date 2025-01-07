@@ -15,6 +15,7 @@ interface UserProfile {
   lastName: string;
   email: string;
   avatar?: string;
+  address: string;
 }
 
 interface UserContextType {
