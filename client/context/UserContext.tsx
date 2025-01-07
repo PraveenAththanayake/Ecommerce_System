@@ -10,6 +10,7 @@ import React, {
 import { getUserProfile } from "@/services";
 
 interface UserProfile {
+  _id: string;
   firstName: string;
   lastName: string;
   email: string;
