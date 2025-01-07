@@ -18,6 +18,6 @@ router.get("/get/:id", GetOrder);
 router.get("/user/orders", Authenticate, GetUserOrders);
 router.put("/update/:id", UpdateOrder);
 router.put("/update/:id/status", UpdateOrderStatus);
-router.delete("/update/:id", DeleteOrder);
+router.delete("/delete/:id", DeleteOrder);
 
 export { router as OrderRoute };
