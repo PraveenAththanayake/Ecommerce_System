@@ -124,7 +124,11 @@ const AdminOrdersPage = () => {
                         Date
                       </p>
                       <p className="text-sm">
-                        {(new Date(order.createdAt), "PPP")}
+                        {new Date(order.createdAt).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}
                       </p>
                     </div>
                     <div className="space-y-2">
