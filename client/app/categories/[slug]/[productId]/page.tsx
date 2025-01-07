@@ -2,31 +2,21 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Image from "next/image";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/store/store";
-import {
-  Heart,
-  ShoppingCart,
-  Plus,
-  Minus,
-  ArrowLeft,
-  Package,
-  Star,
-} from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-} from "@/components/ui/form";
-import { Textarea } from "@/components/ui/textarea";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useProducts } from "@/hooks/useProduct";
-import { IProduct, IReview } from "@/types";
+import { useReview } from "@/hooks/useReview";
+import { useUser } from "@/context/UserContext";
+import { IProduct, IReview, ReviewFormData } from "@/types";
 import {
   addToCart,
   removeFromCart,
@@ -38,37 +28,152 @@ import {
 } from "@/store/features/wishlistSlice";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
+import { ProductImage } from "@/components/products/ProductImage";
+import { ProductInfo } from "@/components/products/ProductInfo";
+import { ReviewForm } from "@/components/review/ReviewForm";
+import ReviewList from "@/components/review/ReviewList";
 
-interface ReviewFormData {
-  rating: number;
-  comment: string;
-}
-
-const ProductDetail = () => {
+export default function ProductDetailPage() {
   const params = useParams();
   const router = useRouter();
   const dispatch = useDispatch();
-  const { products, loading, error } = useProducts();
+
+  // Hooks
+  const { user, loading: userLoading } = useUser();
+  const {
+    products,
+    loading: productsLoading,
+    error: productsError,
+  } = useProducts();
+  const {
+    handleCreateReview,
+    handleUpdateReview,
+    handleDeleteReview,
+    fetchReviews,
+    loading: reviewsLoading,
+    error: reviewsError,
+  } = useReview();
+
+  // Local state
   const [product, setProduct] = useState<IProduct | null>(null);
   const [reviews, setReviews] = useState<IReview[]>([]);
+  const [editingReview, setEditingReview] = useState<IReview | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
+  // Redux state
   const wishlistItems = useSelector((state: RootState) => state.wishlist.items);
   const cartItems = useSelector((state: RootState) => state.cart.items);
 
-  const form = useForm<{ rating: number; comment: string }>({
+  // Forms
+  const newReviewForm = useForm<ReviewFormData>({
     defaultValues: { rating: 5, comment: "" },
   });
 
+  const editReviewForm = useForm<ReviewFormData>({
+    defaultValues: { rating: 5, comment: "" },
+  });
+
+  // Load product and reviews
   useEffect(() => {
     if (params.productId && products.length > 0) {
       const foundProduct = products.find((p) => p._id === params.productId);
       if (foundProduct) {
         setProduct(foundProduct);
-        setReviews(foundProduct.reviews || []);
+        loadProductReviews(foundProduct._id);
       }
     }
   }, [params.productId, products]);
 
+  const loadProductReviews = async (productId: string) => {
+    try {
+      const productReviews = await fetchReviews(productId);
+      if (productReviews) {
+        setReviews(productReviews);
+      }
+    } catch {
+      toast.error("Failed to load reviews");
+    }
+  };
+
+  // Review management
+  const onSubmitNewReview = async (data: ReviewFormData) => {
+    if (!product || !user) {
+      toast.error("You must be logged in to submit a review");
+      return;
+    }
+
+    const reviewData: IReview = {
+      product: product._id,
+      rating: data.rating,
+      comment: data.comment,
+      name: `${user.firstName} ${user.lastName}`,
+      user: user._id,
+    };
+
+    const hasReviewedProduct = product.reviews?.some(
+      (review) => review.user === user._id
+    );
+
+    if (hasReviewedProduct) {
+      toast.error("You have already reviewed this product.");
+      return;
+    }
+
+    try {
+      await handleCreateReview(reviewData);
+      await loadProductReviews(product._id);
+      newReviewForm.reset();
+      toast.success("Review submitted successfully!");
+    } catch {
+      console.log("Failed to submit review");
+    }
+  };
+
+  const onSubmitEditReview = async (data: ReviewFormData) => {
+    if (!product || !user || !editingReview?._id) {
+      toast.error("Unable to update review");
+      return;
+    }
+
+    const updatedReviewData: IReview = {
+      ...editingReview,
+      rating: data.rating,
+      comment: data.comment,
+      user: user._id,
+    };
+
+    try {
+      await handleUpdateReview(editingReview._id, updatedReviewData);
+      await loadProductReviews(product._id);
+      setIsEditDialogOpen(false);
+      setEditingReview(null);
+      editReviewForm.reset();
+      toast.success("Review updated successfully!");
+    } catch {
+      toast.error("Failed to update review");
+    }
+  };
+
+  const handleEditReview = (review: IReview) => {
+    setEditingReview(review);
+    editReviewForm.reset({
+      rating: review.rating,
+      comment: review.comment,
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const onDeleteReview = async (reviewId: string) => {
+    try {
+      await handleDeleteReview(reviewId);
+      await loadProductReviews(product?._id || "");
+      toast.success("Review deleted successfully!");
+    } catch {
+      toast.error("Failed to delete review");
+    }
+  };
+
+  // Cart functions
   const getCartItemQuantity = (productId: string) => {
     const cartItem = cartItems.find((item) => item._id === productId);
     return cartItem?.quantity || 0;
@@ -80,62 +185,36 @@ const ProductDetail = () => {
 
     if (newQuantity === 0) {
       dispatch(removeFromCart(product._id));
-      toast("Removed from Cart", {
-        description: `${product.name} has been removed from your cart.`,
-      });
+      toast.success("Removed from Cart");
     } else if (newQuantity <= product.countInStock) {
       dispatch(
         updateCartItemQuantity({ id: product._id, quantity: newQuantity })
       );
-      toast("Cart Updated", {
-        description: `${product.name} quantity updated to ${newQuantity}.`,
-      });
+      toast.success("Cart Updated");
     }
   };
 
   const handleAddToCart = (product: IProduct) => {
     dispatch(addToCart(product));
-    toast("Added to Cart", {
-      description: `${product.name} has been added to your cart.`,
-    });
+    toast.success("Added to Cart");
   };
 
+  // Wishlist functions
   const toggleWishlist = (product: IProduct) => {
     const isInWishlist = wishlistItems.some((item) => item._id === product._id);
     if (isInWishlist) {
       dispatch(removeFromWishlist(product._id));
-      toast("Removed from Wishlist");
+      toast.success("Removed from Wishlist");
     } else {
       dispatch(addToWishlist(product));
-      toast("Added to Wishlist");
+      toast.success("Added to Wishlist");
     }
   };
 
   const isInWishlist = (productId: string) =>
     wishlistItems.some((item) => item._id === productId);
 
-  const onSubmitReview = (data: ReviewFormData) => {
-    // In a real app, send to API
-    if (product) {
-      const newReview: IReview = {
-        id: Date.now().toString(),
-        rating: data.rating,
-        comment: data.comment,
-        userName: "Current User",
-        createdAt: new Date().toISOString(),
-        user: "Current User",
-        product: product._id,
-        name: product.name,
-      };
-      setReviews([...reviews, newReview]);
-      form.reset();
-      toast("Review Added", {
-        description: "Thank you for your feedback!",
-      });
-    }
-  };
-
-  if (loading) {
+  if (productsLoading || reviewsLoading || userLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-pulse text-muted-foreground">Loading...</div>
@@ -143,44 +222,15 @@ const ProductDetail = () => {
     );
   }
 
-  if (error || !product) {
+  if (productsError || reviewsError || !product) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-destructive">{error || "Product not found"}</div>
+        <div className="text-destructive">
+          {productsError || reviewsError || "Product not found"}
+        </div>
       </div>
     );
   }
-
-  const cartQuantity = getCartItemQuantity(product._id);
-
-  const StarRating = ({
-    rating,
-    onRatingChange,
-  }: {
-    rating: number;
-    onRatingChange: (rating: number) => void;
-  }) => {
-    return (
-      <div className="flex gap-1">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <button
-            key={star}
-            type="button"
-            onClick={() => onRatingChange(star)}
-            className="focus:outline-none"
-          >
-            <Star
-              className={`h-6 w-6 ${
-                star <= rating
-                  ? "fill-yellow-400 text-yellow-400"
-                  : "text-gray-300"
-              } hover:fill-yellow-400 hover:text-yellow-400 transition-colors`}
-            />
-          </button>
-        ))}
-      </div>
-    );
-  };
 
   return (
     <section className="py-16 bg-background mt-12 lg:mt-20">
@@ -194,194 +244,73 @@ const ProductDetail = () => {
           Back
         </Button>
 
+        {/* Product Details */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Product Image */}
-          <div className="relative">
-            <div className="aspect-square relative overflow-hidden rounded-lg">
-              <Image
-                src={product.imageUrl}
-                alt={product.name}
-                fill
-                className="object-cover"
-              />
-              <Button
-                onClick={() => toggleWishlist(product)}
-                size="icon"
-                variant="ghost"
-                className="absolute top-4 right-4 h-10 w-10 rounded-full bg-white/80 hover:bg-white"
-              >
-                <Heart
-                  className={`h-5 w-5 ${
-                    isInWishlist(product._id)
-                      ? "fill-red-500 text-red-500"
-                      : "text-gray-600"
-                  }`}
-                />
-              </Button>
-            </div>
-          </div>
+          <ProductImage
+            product={product}
+            isInWishlist={isInWishlist(product._id)}
+            onWishlistToggle={() => toggleWishlist(product)}
+          />
 
-          {/* Product Info */}
-          <div className="space-y-6">
-            <div>
-              <Badge variant="secondary">{product.category}</Badge>
-              <h1 className="mt-2 text-3xl font-bold">{product.name}</h1>
-              <div className="mt-4 flex items-center gap-4">
-                <p className="text-2xl font-bold text-primary">
-                  ${product.price.toFixed(2)}
-                </p>
-                <div className="flex items-center gap-1">
-                  <span className="text-sm text-muted-foreground">
-                    ({reviews.length} reviews)
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <p className="text-muted-foreground">{product.description}</p>
-
-            <div className="flex items-center gap-2">
-              <Package className="h-4 w-4" />
-              <span
-                className={`text-sm font-medium ${
-                  product.countInStock > 0 ? "text-green-600" : "text-red-600"
-                }`}
-              >
-                {product.countInStock > 0
-                  ? `${product.countInStock} in stock`
-                  : "Out of stock"}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-4">
-              {cartQuantity > 0 ? (
-                <div className="flex items-center justify-between gap-4 bg-primary/10 rounded-md px-4 py-2">
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => handleQuantityChange(product, -1)}
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-                  <span className="font-medium text-lg w-8 text-center">
-                    {cartQuantity}
-                  </span>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => handleQuantityChange(product, 1)}
-                    disabled={cartQuantity >= product.countInStock}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                <Button
-                  onClick={() => handleAddToCart(product)}
-                  disabled={product.countInStock === 0}
-                  size="lg"
-                  className="w-full"
-                >
-                  <ShoppingCart className="h-5 w-5 mr-2" />
-                  Add to Cart
-                </Button>
-              )}
-            </div>
-          </div>
+          <ProductInfo
+            product={product}
+            reviews={reviews}
+            onAddToCart={() => handleAddToCart(product)}
+            onQuantityChange={(change) => handleQuantityChange(product, change)}
+            cartItemQuantity={getCartItemQuantity(product._id)}
+          />
         </div>
 
         {/* Reviews Section */}
         <div className="mt-16">
           <h2 className="text-2xl font-bold mb-8">Customer Reviews</h2>
 
-          {/* Review Form */}
-          <Card className="mb-8">
-            <CardContent className="pt-6">
-              <Form {...form}>
-                <form
-                  onSubmit={form.handleSubmit(onSubmitReview)}
-                  className="space-y-4"
-                >
-                  <FormField
-                    control={form.control}
-                    name="rating"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Rating</FormLabel>
-                        <FormControl>
-                          <StarRating
-                            rating={field.value}
-                            onRatingChange={(value) => field.onChange(value)}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="comment"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Your Review</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder="Share your thoughts about this product..."
-                            className="resize-none"
-                            {...field}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
+          {/* New Review Form */}
+          {user && (
+            <Card className="mb-8">
+              <CardContent className="pt-6">
+                <ReviewForm
+                  form={newReviewForm}
+                  onSubmit={onSubmitNewReview}
+                  submitLabel="Submit Review"
+                />
+              </CardContent>
+            </Card>
+          )}
 
-                  <Button type="submit">Submit Review</Button>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
+          {/* Edit Review Dialog */}
+          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Edit Your Review</DialogTitle>
+              </DialogHeader>
+              <ReviewForm
+                form={editReviewForm}
+                onSubmit={onSubmitEditReview}
+                submitLabel="Update Review"
+                cancelButton={
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsEditDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                }
+              />
+            </DialogContent>
+          </Dialog>
 
           {/* Reviews List */}
-          <div className="space-y-6">
-            {reviews.length === 0 ? (
-              <p className="text-center text-muted-foreground py-12">
-                No reviews yet. Be the first to review this product!
-              </p>
-            ) : (
-              reviews.map((review) => (
-                <Card key={review.id}>
-                  <CardContent className="pt-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <p className="font-semibold">{review.userName}</p>
-                        <div className="flex items-center gap-2">
-                          <div className="flex">
-                            {[...Array(5)].map((_, i) => (
-                              <Star
-                                key={i}
-                                className={`h-4 w-4 ${
-                                  i < review.rating
-                                    ? "fill-yellow-400 text-yellow-400"
-                                    : "text-gray-300"
-                                }`}
-                              />
-                            ))}
-                          </div>
-                          <p className="text-sm text-muted-foreground">
-                            {new Date(review.createdAt).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    <p className="text-muted-foreground">{review.comment}</p>
-                  </CardContent>
-                </Card>
-              ))
-            )}
-          </div>
+
+          <ReviewList
+            reviews={reviews}
+            currentUserId={user?._id}
+            onEdit={handleEditReview}
+            onDelete={onDeleteReview}
+          />
         </div>
       </div>
     </section>
   );
-};
-
-export default ProductDetail;
+}
