@@ -1,123 +1,122 @@
 import { IOrder } from "@/types";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
+import Cookies from "js-cookie";
 
-// Base URL for your backend API
-const API_URL = "http://localhost:8000/order";
+const api = axios.create({
+  baseURL: "http://localhost:8000/order",
+  withCredentials: true,
+});
 
-// Create a new order
-export const createOrder = async (orderData: IOrder) => {
+api.interceptors.request.use((config) => {
+  const token = Cookies.get("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    console.error("API Error:", error);
+    return Promise.reject(error);
+  }
+);
+
+export const createOrder = async (orderData: Omit<IOrder, "user">) => {
   try {
-    const response = await axios.post(`${API_URL}/create`, orderData, {
-      withCredentials: true,
-    });
+    const token = Cookies.get("token");
+    if (!token) {
+      throw new Error("No token found, please login first.");
+    }
+
+    const response = await api.post("/create", orderData);
     return response.data;
   } catch (error) {
-    if (axios.isAxiosError(error) && error.response) {
-      throw new Error(error.response.data?.message || "Error creating order");
-    } else {
-      throw new Error("Error creating order");
-    }
+    handleAxiosError(error as AxiosError);
   }
 };
 
-// Fetch all orders
-export const getOrders = async () => {
+export const getAllOrders = async () => {
   try {
-    const response = await axios.get(`${API_URL}/get`, {
-      withCredentials: true,
-    });
+    const response = await api.get("/get");
     return response.data;
   } catch (error) {
-    if (axios.isAxiosError(error) && error.response) {
-      throw new Error(error.response.data?.message || "Error fetching orders");
-    } else {
-      throw new Error("Error fetching orders");
-    }
+    handleAxiosError(error as AxiosError);
   }
 };
 
-// Fetch a single order by ID
-export const getOrderById = async (id: string) => {
+export const getOrder = async (orderId: string) => {
   try {
-    const response = await axios.get(`${API_URL}/get/${id}`, {
-      withCredentials: true,
-    });
+    const response = await api.get(`/get/${orderId}`);
     return response.data;
   } catch (error) {
-    if (axios.isAxiosError(error) && error.response) {
-      throw new Error(error.response.data?.message || "Error fetching order");
-    } else {
-      throw new Error("Error fetching order");
-    }
+    handleAxiosError(error as AxiosError);
   }
 };
 
-// Fetch orders for the authenticated user
 export const getUserOrders = async () => {
   try {
-    const response = await axios.get(`${API_URL}/user/orders`, {
-      withCredentials: true,
-    });
+    const token = Cookies.get("token");
+    if (!token) {
+      throw new Error("No token found, please login first.");
+    }
+
+    const response = await api.get("/user/orders");
     return response.data;
   } catch (error) {
-    if (axios.isAxiosError(error) && error.response) {
-      throw new Error(
-        error.response.data?.message || "Error fetching user orders"
-      );
-    } else {
-      throw new Error("Error fetching user orders");
-    }
+    handleAxiosError(error as AxiosError);
   }
 };
 
-// Update an order
-export const updateOrder = async (id: string, updateData: Partial<IOrder>) => {
+export const updateOrder = async (
+  orderId: string,
+  updateData: Partial<IOrder>
+) => {
   try {
-    const response = await axios.put(`${API_URL}/update/${id}`, updateData, {
-      withCredentials: true,
-    });
+    // Only allow updating shippingInfo and orderStatus
+    const allowedUpdateData = {
+      shippingInfo: updateData.shippingInfo,
+      orderStatus: updateData.orderStatus,
+    };
+
+    const response = await api.put(`/update/${orderId}`, allowedUpdateData);
     return response.data;
   } catch (error) {
-    if (axios.isAxiosError(error) && error.response) {
-      throw new Error(error.response.data?.message || "Error updating order");
-    } else {
-      throw new Error("Error updating order");
-    }
+    handleAxiosError(error as AxiosError);
   }
 };
 
-// Update order status
-export const updateOrderStatus = async (id: string, orderStatus: string) => {
+export const updateOrderStatus = async (
+  orderId: string,
+  orderStatus: IOrder["orderStatus"]
+) => {
   try {
-    const response = await axios.put(
-      `${API_URL}/update-status/${id}`,
-      { orderStatus },
-      { withCredentials: true }
-    );
-    return response.data;
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response) {
-      throw new Error(
-        error.response.data?.message || "Error updating order status"
-      );
-    } else {
-      throw new Error("Error updating order status");
-    }
-  }
-};
-
-// Delete an order
-export const deleteOrder = async (id: string) => {
-  try {
-    const response = await axios.delete(`${API_URL}/delete/${id}`, {
-      withCredentials: true,
+    const response = await api.put(`/update/${orderId}/status`, {
+      orderStatus,
     });
     return response.data;
   } catch (error) {
-    if (axios.isAxiosError(error) && error.response) {
-      throw new Error(error.response.data?.message || "Error deleting order");
-    } else {
-      throw new Error("Error deleting order");
-    }
+    handleAxiosError(error as AxiosError);
+  }
+};
+
+export const deleteOrder = async (orderId: string) => {
+  try {
+    const response = await api.delete(`/update/${orderId}`);
+    return response.data;
+  } catch (error) {
+    handleAxiosError(error as AxiosError);
+  }
+};
+
+const handleAxiosError = (error: AxiosError) => {
+  if (axios.isAxiosError(error) && error.response) {
+    const errorMessage =
+      (error.response.data as { message: string }).message ||
+      "An error occurred";
+    throw new Error(errorMessage);
+  } else {
+    throw new Error("An error occurred");
   }
 };
