@@ -17,8 +17,13 @@ export const CreateInquiry = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { name, email, inquiry } = <InquiryDto>req.body;
-    const user = req.user?._id;
+    const { name, email, inquiry } = req.body;
+    const user = req.user;
+
+    if (!user) {
+      res.status(401).json({ message: "User not authenticated" });
+      return;
+    }
 
     const createInquiry = await Inquiry.create({
       name,
@@ -29,12 +34,19 @@ export const CreateInquiry = async (
 
     res.status(201).json(createInquiry);
   } catch (error) {
-    res.status(500).json({ message: "Error creating inquiry", error });
+    console.error("Create Inquiry Error:", error);
+    res.status(500).json({
+      message: "Error creating inquiry",
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
 };
 
 // Get All Inquiries function
-export const GetInquiries = async (req: Request, res: Response) => {
+export const GetInquiries = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const inquiries = await Inquiry.find()
       .populate("user", "name email")
@@ -46,12 +58,19 @@ export const GetInquiries = async (req: Request, res: Response) => {
       res.json({ message: "No inquiries found" });
     }
   } catch (error) {
-    res.status(500).json({ message: "Error fetching inquiries", error });
+    console.error("Get Inquiries Error:", error);
+    res.status(500).json({
+      message: "Error fetching inquiries",
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
 };
 
 // Get Inquiry by ID function
-export const GetInquiryById = async (req: Request, res: Response) => {
+export const GetInquiryById = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const { id } = req.params;
     const inquiry = await Inquiry.findById(id).populate("user", "name email");
@@ -62,35 +81,70 @@ export const GetInquiryById = async (req: Request, res: Response) => {
       res.status(404).json({ message: "Inquiry not found" });
     }
   } catch (error) {
-    res.status(500).json({ message: "Error fetching inquiry", error });
+    console.error("Get Inquiry By Id Error:", error);
+    res.status(500).json({
+      message: "Error fetching inquiry",
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
 };
 
 // Update Inquiry function
-export const UpdateInquiry = async (req: Request, res: Response) => {
+export const UpdateInquiry = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const { id } = req.params;
-    const { name, email, inquiry } = <InquiryDto>req.body;
+    const { name, email, inquiry } = req.body;
+    const user = req.user;
 
-    const existingInquiry = await FindInquiry(id);
+    // Check if inquiry exists
+    const inquiryMessage = await Inquiry.findById(id);
 
-    if (existingInquiry) {
-      existingInquiry.name = name;
-      existingInquiry.email = email;
-      existingInquiry.inquiry = inquiry;
+    if (!inquiryMessage) {
+      res.status(404).json({ message: "Inquiry not found" });
+      return;
+    }
 
-      await existingInquiry.save();
-      res.json(existingInquiry);
+    // Type guard for user
+    if (
+      !user ||
+      !user._id ||
+      inquiryMessage.user.toString() !== user._id.toString()
+    ) {
+      res
+        .status(403)
+        .json({ message: "Not authorized to update this inquiry" });
+      return;
+    }
+
+    // Update the inquiry
+    const updatedInquiry = await Inquiry.findByIdAndUpdate(
+      id,
+      { name, email, inquiry },
+      { new: true, runValidators: true }
+    );
+
+    if (updatedInquiry) {
+      res.json(updatedInquiry);
     } else {
       res.status(404).json({ message: "Inquiry not found" });
     }
   } catch (error) {
-    res.status(500).json({ message: "Error updating inquiry", error });
+    console.error("Update Inquiry Error:", error);
+    res.status(500).json({
+      message: "Error updating inquiry",
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
 };
 
 // Delete Inquiry function
-export const DeleteInquiry = async (req: Request, res: Response) => {
+export const DeleteInquiry = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const { id } = req.params;
     const inquiry = await FindInquiry(id);
@@ -102,6 +156,10 @@ export const DeleteInquiry = async (req: Request, res: Response) => {
       res.status(404).json({ message: "Inquiry not found" });
     }
   } catch (error) {
-    res.status(500).json({ message: "Error deleting inquiry", error });
+    console.error("Delete Inquiry Error:", error);
+    res.status(500).json({
+      message: "Error deleting inquiry",
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
 };
