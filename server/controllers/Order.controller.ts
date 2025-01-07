@@ -203,18 +203,6 @@ export const UpdateOrderStatus = async (
       return;
     }
 
-    // Prevent updating completed or cancelled orders
-    if (
-      order.orderStatus === "Completed" ||
-      order.orderStatus === "Cancelled"
-    ) {
-      res.status(400).json({
-        success: false,
-        message: `Cannot update order that is already ${order.orderStatus}`,
-      });
-      return;
-    }
-
     const updatedOrder = await Order.findByIdAndUpdate(
       id,
       { orderStatus },
