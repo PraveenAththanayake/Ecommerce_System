@@ -17,9 +17,9 @@ router.get("/product/:productId", GetReviews);
 
 router.get("/get/:id", GetReviewById);
 
-router.put("/update/:id", UpdateReview);
+router.put("/update/:id", Authenticate, UpdateReview);
 
-router.delete("/delete/:id", DeleteReview);
+router.delete("/delete/:id", Authenticate, DeleteReview);
 
 router.get("/user", Authenticate, GetUserReviews);
 

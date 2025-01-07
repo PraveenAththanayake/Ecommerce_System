@@ -47,11 +47,14 @@ export const CreateReview = async (
       await productDetails.save();
     }
 
+    // Send success response and return
     res.status(201).json({
       success: true,
       review: newReview,
     });
+    return;
   } catch (error) {
+    // Pass the error to the next middleware for centralized error handling
     next(error);
   }
 };
@@ -168,6 +171,7 @@ export const DeleteReview = async (
   next: NextFunction
 ) => {
   try {
+    const user = req.user;
     const { id } = req.params;
 
     const review = await Review.findById(id);
@@ -177,6 +181,14 @@ export const DeleteReview = async (
       return;
     }
 
+    if (!user || review.user.toString() !== user._id.toString()) {
+      res
+        .status(403)
+        .json({ message: "You are not authorized to delete this review" });
+      return;
+    }
+
+    // Delete the review
     await review.deleteOne();
 
     // Update product's average rating and review count
