@@ -12,14 +12,23 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { useInquiry } from "@/hooks/useInquiry";
+import { toast } from "sonner";
 
 interface InquiryDialogProps {
   children: React.ReactNode;
 }
 
+interface InquiryFormData {
+  name: string;
+  email: string;
+  message: string;
+}
+
 export const InquiryDialog = ({ children }: InquiryDialogProps) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
+  const [open, setOpen] = useState(false);
+  const { createNewInquiry, loading } = useInquiry();
+  const [formData, setFormData] = useState<InquiryFormData>({
     name: "",
     email: "",
     message: "",
@@ -27,11 +36,25 @@ export const InquiryDialog = ({ children }: InquiryDialogProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    // Add your inquiry submission logic here
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsSubmitting(false);
-    setFormData({ name: "", email: "", message: "" });
+
+    try {
+      await createNewInquiry({
+        name: formData.name,
+        email: formData.email,
+        inquiry: formData.message,
+      });
+
+      setFormData({ name: "", email: "", message: "" });
+      setOpen(false);
+
+      toast("Success", {
+        description: "Your inquiry has been sent successfully.",
+      });
+    } catch {
+      toast("Error", {
+        description: "Failed to send inquiry. Please try again.",
+      });
+    }
   };
 
   const handleInputChange = (
@@ -41,8 +64,10 @@ export const InquiryDialog = ({ children }: InquiryDialogProps) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const isFormValid = formData.name && formData.email && formData.message;
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -56,6 +81,8 @@ export const InquiryDialog = ({ children }: InquiryDialogProps) => {
               value={formData.name}
               onChange={handleInputChange}
               required
+              disabled={loading}
+              className="w-full"
             />
           </div>
           <div className="space-y-2">
@@ -66,6 +93,8 @@ export const InquiryDialog = ({ children }: InquiryDialogProps) => {
               value={formData.email}
               onChange={handleInputChange}
               required
+              disabled={loading}
+              className="w-full"
             />
           </div>
           <div className="space-y-2">
@@ -74,12 +103,17 @@ export const InquiryDialog = ({ children }: InquiryDialogProps) => {
               placeholder="Your Message"
               value={formData.message}
               onChange={handleInputChange}
-              className="min-h-[100px]"
+              className="min-h-[100px] w-full"
               required
+              disabled={loading}
             />
           </div>
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={loading || !isFormValid}
+          >
+            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Send Inquiry
           </Button>
         </form>
