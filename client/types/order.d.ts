@@ -17,14 +17,14 @@ export interface UseOrderReturn {
   setCurrentOrder: (order: IOrder | null) => void;
 }
 
-export interface CartItem {
-  _id: string;
-  name: string;
-  price: number;
-  quantity: number;
-  imageUrl: string;
-  countInStock: number;
-}
+// export interface CartItem {
+//   _id: string;
+//   name: string;
+//   price: number;
+//   quantity: number;
+//   imageUrl: string;
+//   countInStock: number;
+// }
 
 export interface ShippingInfo {
   address: string;
