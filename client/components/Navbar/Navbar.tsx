@@ -344,7 +344,12 @@ const RightSideIcons = () => {
 
       <WishlistDropdown />
 
-      <Button variant="ghost" size="icon" className="hidden sm:flex relative">
+      <Button
+        variant="ghost"
+        size="icon"
+        className="hidden sm:flex relative"
+        onClick={() => router.push("/inquiry")}
+      >
         <Bell className="h-5 w-5" />
         <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center">
           5
