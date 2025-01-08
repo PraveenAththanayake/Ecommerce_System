@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { Inquiry } from "../models";
 import { InquiryDto } from "../dto";
 
@@ -161,5 +161,31 @@ export const DeleteInquiry = async (
       message: "Error deleting inquiry",
       error: error instanceof Error ? error.message : String(error),
     });
+  }
+};
+
+// Get User's Inquiry
+export const GetUserInquiry = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const user = req.user;
+
+    if (!user) {
+      res.status(401).json({ message: "User not authenticated" });
+      return;
+    }
+
+    const inquiry = await Inquiry.find({ user: user._id });
+
+    res.status(200).json({
+      success: true,
+      count: inquiry.length,
+      inquiry,
+    });
+  } catch (error) {
+    next(error);
   }
 };
