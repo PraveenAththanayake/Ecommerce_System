@@ -36,16 +36,22 @@ const Login = () => {
       if (userData.token) {
         // Store token in cookie
         document.cookie = `token=${userData.token}; path=/; max-age=86400; samesite=lax`;
+        document.cookie = `role=${userData.role}; path=/; max-age=86400; samesite=lax`;
+        console.log("Cookies set:", document.cookie);
 
         // Store in Redux
         dispatch(
           setCredentials({
             user: userData,
             token: userData.token,
+            role: userData.role,
           })
         );
-
-        router.push("/");
+        if (userData.role === "admin") {
+          router.push("/admin");
+        } else {
+          router.push("/");
+        }
       }
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {

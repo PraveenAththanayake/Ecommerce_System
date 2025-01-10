@@ -394,7 +394,14 @@ const RightSideIcons = () => {
           <DropdownMenuItem onClick={() => router.push("/wishlist")}>
             Saved Items
           </DropdownMenuItem>
-          <DropdownMenuItem>Settings</DropdownMenuItem>
+          {user?.role === "admin" && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => router.push("/admin")}>
+                Admin Dashboard
+              </DropdownMenuItem>
+            </>
+          )}
           <DropdownMenuSeparator />
           <DropdownMenuItem className="text-red-600" onClick={handleLogout}>
             Logout

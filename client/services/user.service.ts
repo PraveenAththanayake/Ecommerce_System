@@ -58,12 +58,17 @@ export const loginUser = async (loginData: IUserLogin) => {
         sameSite: "lax",
       });
 
+      Cookies.set("role", response.data.role, {
+        path: "/",
+        maxAge: 86400,
+        sameSite: "lax",
+      });
+
       // Set default authorization header
       api.defaults.headers.common[
         "Authorization"
       ] = `Bearer ${response.data.token}`;
     }
-
     return response.data;
   } catch (error) {
     console.error("LoginUser - Error:", error);
@@ -122,6 +127,7 @@ export const deleteUserAccount = async () => {
     const response = await api.delete("/delete");
 
     Cookies.remove("token", { path: "/" });
+    Cookies.remove("role", { path: "/" });
     return response.data;
   } catch (error) {
     console.error("DeleteUserAccount - Error:", error);
@@ -137,6 +143,7 @@ export const deleteUserAccount = async () => {
 export const logoutUser = () => {
   console.log("LogoutUser - Removing token cookie");
   Cookies.remove("token", { path: "/" });
+  Cookies.remove("role", { path: "/" });
   const tokenAfterRemoval = Cookies.get("token");
   console.log("LogoutUser - Token after removal:", tokenAfterRemoval);
 };

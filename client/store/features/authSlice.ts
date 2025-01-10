@@ -7,6 +7,7 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
+  role: string | null;
 }
 
 const initialState: AuthState = {
@@ -15,6 +16,7 @@ const initialState: AuthState = {
   isAuthenticated: false,
   isLoading: false,
   error: null,
+  role: null,
 };
 
 const authSlice = createSlice({
@@ -24,6 +26,7 @@ const authSlice = createSlice({
     setCredentials: (state, action) => {
       state.user = action.payload.user;
       state.token = action.payload.token;
+      state.role = action.payload.role;
       state.isAuthenticated = true;
     },
     setUser: (state, action: PayloadAction<IUser>) => {
@@ -39,6 +42,7 @@ const authSlice = createSlice({
     logout: (state) => {
       state.user = null;
       state.token = null;
+      state.role = null;
       state.isAuthenticated = false;
       // Clear cookie on logout
       document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT";

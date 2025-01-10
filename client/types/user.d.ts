@@ -29,6 +29,7 @@ interface UserProfile {
   avatar?: string;
   address: string;
   phone?: string;
+  role?: string;
 }
 
 interface UpdateUserData {
