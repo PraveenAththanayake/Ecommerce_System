@@ -14,8 +14,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useRouter } from "next/navigation";
+import { IUser } from "@/types";
+import { createUser } from "@/services";
 
 const Register = () => {
+  const router = useRouter();
   const [showPassword, setShowPassword] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState("");
@@ -37,8 +41,30 @@ const Register = () => {
     e.preventDefault();
     setLoading(true);
     setError("");
-    // Add your registration logic here
-    setTimeout(() => setLoading(false), 1000);
+
+    const form = e.currentTarget;
+    const registerData: IUser = {
+      firstName: form.elements.firstName.value,
+      lastName: form.elements.lastName.value,
+      email: form.elements.email.value,
+      phone: form.elements.phone.value,
+      address: form.elements.address.value,
+      password: form.elements.password.value,
+      role: "customer",
+    };
+
+    try {
+      await createUser(registerData);
+      router.push("/login?registered=true");
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("An unexpected error occurred. Please try again.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

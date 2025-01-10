@@ -1,12 +1,12 @@
 export interface IUser {
-  _id: string;
+  _id?: string;
   firstName: string;
   lastName: string;
   address: string;
   email: string;
   phone: string;
   password: string;
-  role: string;
+  role?: string;
 }
 
 export interface IUserLogin {
@@ -14,16 +14,36 @@ export interface IUserLogin {
   password: string;
 }
 
-export interface IEditUser {
-  firstName?: string;
-  lastName?: string;
-  phone?: string;
-  address?: string;
-}
-
 export interface AuthState {
   user: IUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
+}
+
+interface UserProfile {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  avatar?: string;
+  address: string;
+  phone?: string;
+}
+
+interface UpdateUserData {
+  firstName?: string;
+  lastName?: string;
+  address?: string;
+  phone?: string;
+}
+
+interface UserContextType {
+  user: UserProfile | null;
+  loading: boolean;
+  error: string | null;
+  refetchUser: () => Promise<void>;
+  updateProfile: (data: UpdateUserData) => Promise<void>;
+  deleteAccount: () => Promise<void>;
+  setError: (error: string | null) => void;
 }

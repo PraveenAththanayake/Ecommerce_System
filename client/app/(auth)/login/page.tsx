@@ -45,13 +45,11 @@ const Login = () => {
           })
         );
 
-        // Verify cookie was set
-        console.log("Cookies after login:", document.cookie);
-
         router.push("/");
       }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
-      console.error("Login failed:", err);
+      // Handle error silently
     }
   };
 

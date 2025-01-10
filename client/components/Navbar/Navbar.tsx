@@ -385,11 +385,15 @@ const RightSideIcons = () => {
             </div>
           </div>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>
+          <DropdownMenuItem onClick={() => router.push("/profile")}>
             <User className="mr-2 h-4 w-4" /> Profile
           </DropdownMenuItem>
-          <DropdownMenuItem>My Orders</DropdownMenuItem>
-          <DropdownMenuItem>Saved Items</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => router.push("/order")}>
+            My Orders
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => router.push("/wishlist")}>
+            Saved Items
+          </DropdownMenuItem>
           <DropdownMenuItem>Settings</DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem className="text-red-600" onClick={handleLogout}>

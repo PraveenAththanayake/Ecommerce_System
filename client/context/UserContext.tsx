@@ -7,46 +7,78 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
-import { getUserProfile } from "@/services";
+import {
+  getUserProfile,
+  updateUserProfile,
+  deleteUserAccount,
+} from "@/services";
 import { useRouter } from "next/navigation";
 import axios from "axios";
-
-interface UserProfile {
-  _id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  avatar?: string;
-  address: string;
-}
-
-interface UserContextType {
-  user: UserProfile | null;
-  loading: boolean;
-  error: string | null;
-  refetchUser: () => Promise<void>;
-}
+import { UpdateUserData, UserContextType, UserProfile } from "@/types";
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   const fetchUserProfile = async () => {
     try {
       setLoading(true);
+      setError(null);
       const data = await getUserProfile();
-      if (data) {
-        setUser(data);
-      }
+      setUser(data);
     } catch (err) {
-      // Instead of setting error state, handle unauthorized silently
       if (axios.isAxiosError(err) && err.response?.status === 401) {
+        setUser(null);
         router.push("/login");
       }
       setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateProfile = async (data: UpdateUserData) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const updatedUser = await updateUserProfile(data);
+      setUser(updatedUser);
+      return updatedUser;
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        const errorMessage =
+          err.response?.data?.message || "Failed to update profile";
+        setError(errorMessage);
+        throw new Error(errorMessage);
+      }
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      await deleteUserAccount();
+      setUser(null);
+      // Use setTimeout to ensure state updates complete before navigation
+      setTimeout(() => {
+        router.push("/login");
+      }, 0);
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        const errorMessage =
+          err.response?.data?.message || "Failed to delete account";
+        setError(errorMessage);
+        throw new Error(errorMessage);
+      }
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -61,14 +93,18 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       value={{
         user,
         loading,
-        error: null,
+        error,
         refetchUser: fetchUserProfile,
+        updateProfile: handleUpdateProfile,
+        deleteAccount: handleDeleteAccount,
+        setError,
       }}
     >
       {children}
     </UserContext.Provider>
   );
 };
+
 export const useUser = () => {
   const context = useContext(UserContext);
   if (context === undefined) {

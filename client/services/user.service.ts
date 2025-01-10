@@ -1,4 +1,4 @@
-import { IUserLogin } from "@/types";
+import { IUser, IUserLogin } from "@/types";
 import axios from "axios";
 import Cookies from "js-cookie";
 
@@ -34,6 +34,17 @@ api.interceptors.response.use(
   }
 );
 
+// Create user
+export const createUser = async (userData: IUser) => {
+  try {
+    const response = await api.post("/register", userData);
+    return response.data;
+  } catch (error) {
+    console.error("CreateUser - Error:", error);
+    throw error;
+  }
+};
+
 // Updated login function to save token
 export const loginUser = async (loginData: IUserLogin) => {
   try {
@@ -56,11 +67,10 @@ export const loginUser = async (loginData: IUserLogin) => {
     return response.data;
   } catch (error) {
     console.error("LoginUser - Error:", error);
-    throw error;
   }
 };
 
-// Updated getUserProfile to use stored token from cookie
+// Get user profile
 export const getUserProfile = async () => {
   try {
     const token = Cookies.get("token");
@@ -79,7 +89,51 @@ export const getUserProfile = async () => {
   }
 };
 
-// Fixed logout function to remove cookie instead of localStorage
+// Update user profile
+export const updateUserProfile = async (userData: Partial<IUser>) => {
+  try {
+    const token = Cookies.get("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    const response = await api.put("/update", userData);
+    return response.data;
+  } catch (error) {
+    console.error("UpdateUserProfile - Error:", error);
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      Cookies.remove("token", { path: "/" });
+      window.location.href = "/login";
+    }
+    throw error;
+  }
+};
+
+// Delete user account
+export const deleteUserAccount = async () => {
+  try {
+    const token = Cookies.get("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    const response = await api.delete("/delete");
+
+    Cookies.remove("token", { path: "/" });
+    return response.data;
+  } catch (error) {
+    console.error("DeleteUserAccount - Error:", error);
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      Cookies.remove("token", { path: "/" });
+      window.location.href = "/login";
+    }
+    throw error;
+  }
+};
+
+// Logout user
 export const logoutUser = () => {
   console.log("LogoutUser - Removing token cookie");
   Cookies.remove("token", { path: "/" });
