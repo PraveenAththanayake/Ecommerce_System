@@ -394,6 +394,14 @@ const RightSideIcons = () => {
           <DropdownMenuItem onClick={() => router.push("/wishlist")}>
             Saved Items
           </DropdownMenuItem>
+          {user?.role === "customer" && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => router.push("/inquiry")}>
+                Inquiry
+              </DropdownMenuItem>
+            </>
+          )}
           {user?.role === "admin" && (
             <>
               <DropdownMenuSeparator />
