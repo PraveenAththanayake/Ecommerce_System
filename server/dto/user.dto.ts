@@ -27,4 +27,7 @@ export interface EditUserInput {
   lastName: string;
   address: string;
   phone: string;
+  email: string;
+  password: string;
+  salt: string;
 }

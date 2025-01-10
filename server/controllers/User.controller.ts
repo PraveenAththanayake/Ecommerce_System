@@ -128,7 +128,9 @@ export const GetUserProfile = async (req: Request, res: Response) => {
 };
 
 export const UpdateUserProfile = async (req: Request, res: Response) => {
-  const { firstName, lastName, phone, address } = <EditUserInput>req.body;
+  const { firstName, lastName, phone, address, email } = <EditUserInput>(
+    req.body
+  );
 
   const user = req.user;
 
@@ -140,6 +142,7 @@ export const UpdateUserProfile = async (req: Request, res: Response) => {
       existingUser.lastName = lastName;
       existingUser.phone = phone;
       existingUser.address = address;
+      existingUser.email = email;
 
       const savedResult = await existingUser.save();
       res.json(savedResult);

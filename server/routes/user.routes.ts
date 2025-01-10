@@ -28,9 +28,9 @@ router.get("/users/:id", GetUserById);
 router.get("/profile", Authenticate, GetUserProfile);
 
 // Update User Profile (Protected Route)
-router.put("/profile", Authenticate, UpdateUserProfile);
+router.put("/update", Authenticate, UpdateUserProfile);
 
 // Delete Current User (Protected Route)
-router.delete("/profile", Authenticate, DeleteUser);
+router.delete("/delete", Authenticate, DeleteUser);
 
 export { router as UserRoute };
