@@ -30,17 +30,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       dispatch(setUser(profile));
     }
 
-    if (error) {
-      console.error("Auth error:", error);
-
-      // Handle specific error types (e.g., unauthorized token)
-      if ("status" in error && error.status === 401) {
-        console.warn("Token expired or unauthorized. Logging out...");
-        dispatch(logout());
-        router.push("/login");
-      } else {
-        console.error("Unexpected error:", error);
-      }
+    if (error && "status" in error && error.status === 401) {
+      dispatch(logout());
+      router.push("/login");
     }
   }, [profile, error, dispatch, router]);
 

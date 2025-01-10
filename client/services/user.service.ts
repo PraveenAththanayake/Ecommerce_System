@@ -23,13 +23,13 @@ api.interceptors.request.use((config) => {
 
 // Add response interceptor for debugging
 api.interceptors.response.use(
-  (response) => {
-    console.log("Response interceptor - Status:", response.status);
-    console.log("Response interceptor - Data:", response.data);
-    return response;
-  },
+  (response) => response,
   (error) => {
-    console.error("Response interceptor - Error:", error);
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      Cookies.remove("token", { path: "/" });
+      window.location.href = "/login";
+      return new Promise(() => {});
+    }
     return Promise.reject(error);
   }
 );
@@ -63,25 +63,19 @@ export const loginUser = async (loginData: IUserLogin) => {
 // Updated getUserProfile to use stored token from cookie
 export const getUserProfile = async () => {
   try {
-    console.log("GetUserProfile - Making request");
     const token = Cookies.get("token");
     if (!token) {
-      throw new Error("No token found, please login first.");
+      return null;
     }
 
-    // Set token for the request
     api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-
     const response = await api.get("/profile");
-    console.log("GetUserProfile - Response:", response.data);
     return response.data;
   } catch (error) {
-    console.error("GetUserProfile - Error:", error);
-    if (axios.isAxiosError(error) && error.response) {
-      throw new Error(error.response.data?.message || "Error fetching profile");
-    } else {
-      throw new Error("Error fetching profile");
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      Cookies.remove("token", { path: "/" });
     }
+    return null;
   }
 };
 

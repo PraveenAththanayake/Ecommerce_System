@@ -8,6 +8,8 @@ import React, {
   ReactNode,
 } from "react";
 import { getUserProfile } from "@/services";
+import { useRouter } from "next/navigation";
+import axios from "axios";
 
 interface UserProfile {
   _id: string;
@@ -30,18 +32,20 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   const fetchUserProfile = async () => {
     try {
       setLoading(true);
-      setError(null);
       const data = await getUserProfile();
-      setUser(data);
+      if (data) {
+        setUser(data);
+      }
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to fetch user profile"
-      );
+      // Instead of setting error state, handle unauthorized silently
+      if (axios.isAxiosError(err) && err.response?.status === 401) {
+        router.push("/login");
+      }
       setUser(null);
     } finally {
       setLoading(false);
@@ -57,7 +61,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       value={{
         user,
         loading,
-        error,
+        error: null,
         refetchUser: fetchUserProfile,
       }}
     >
@@ -65,7 +69,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     </UserContext.Provider>
   );
 };
-
 export const useUser = () => {
   const context = useContext(UserContext);
   if (context === undefined) {
