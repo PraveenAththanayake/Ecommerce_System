@@ -5,7 +5,7 @@ FROM node:latest
 WORKDIR /usr/src/app
 
 # Copy the contents of the local "server" directory to the root directory of the container
-COPY server/ .
+COPY . .
 
 # Run the npm install command to install the dependencies specified in package.json
 RUN npm install
