@@ -10,7 +10,7 @@ import {
 } from "../../../controllers";
 
 // Mock the Category model
-jest.mock("../../models");
+jest.mock("../../../models");
 
 describe("Category Controller Tests", () => {
   let mockRequest: Partial<Request>;
