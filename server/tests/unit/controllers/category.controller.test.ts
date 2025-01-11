@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { Category } from "../../models";
+import { Category } from "../../../models";
 import {
   CreateCategory,
   DeleteCategory,
@@ -7,7 +7,7 @@ import {
   GetCategories,
   GetCategoryById,
   UpdateCategory,
-} from "../../controllers";
+} from "../../../controllers";
 
 // Mock the Category model
 jest.mock("../../models");

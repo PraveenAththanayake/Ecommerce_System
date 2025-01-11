@@ -4,7 +4,7 @@ import {
   GenerateSalt,
   GenerateSignature,
   ValidatePassword,
-} from "../../utility";
+} from "../../../utility";
 import {
   CreateUser,
   UserLogin,
@@ -12,12 +12,12 @@ import {
   GetUserProfile,
   UpdateUserProfile,
   DeleteUser,
-} from "../../controllers";
-import { User } from "../../models";
+} from "../../../controllers";
+import { User } from "../../../models";
 
 // Mock the User model and utility functions
-jest.mock("../../models");
-jest.mock("../../utility");
+jest.mock("../../../models");
+jest.mock("../../../utility");
 
 describe("User Controller Tests", () => {
   let mockRequest: Partial<Request>;
