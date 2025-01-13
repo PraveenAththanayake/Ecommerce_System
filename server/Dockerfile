@@ -10,6 +10,9 @@ COPY . .
 # Run the npm install command to install the dependencies specified in package.json
 RUN npm install
 
+# Install nodemon globally
+RUN npm install -g nodemon
+
 # Expose port 3000 to allow incoming connections to the container
 EXPOSE 3000
 
