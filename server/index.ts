@@ -13,6 +13,7 @@ import {
   OrderRoute,
   ProductRoute,
   ReviewRoute,
+  NewsletterRoute,
 } from "./routes";
 import { AuthPayload } from "./dto";
 import { FindUser } from "./controllers";
@@ -75,6 +76,7 @@ app.use("/inquiry", InquiryRoute);
 app.use("/order", OrderRoute);
 app.use("/product", ProductRoute);
 app.use("/review", ReviewRoute);
+app.use("/newsletter", NewsletterRoute);
 
 // WebSocket functions
 function broadcastOnlineUsers() {

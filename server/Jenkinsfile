@@ -1,0 +1,72 @@
+pipeline {
+    agent any 
+    
+    stages { 
+        stage('SCM Checkout') {
+            steps {
+                retry(3) {
+                    git branch: 'main', url: 'https://github.com/PraveenAththanayake/Ecommerce_System'
+                }
+            }
+        }
+        stage('Build Docker Image') {
+            steps {  
+                bat 'docker build -t praveenaththanayake/estore-server:%BUILD_NUMBER% -f server/Dockerfile server'
+            }
+        }
+        stage('Install Dependencies') {
+            steps {
+                script {
+                    echo 'Installing dependencies inside Docker container...'
+                    bat 'docker run --rm praveenaththanayake/estore-server:%BUILD_NUMBER% npm install'
+                }
+            }
+        }
+        stage('Run Tests') {
+            steps {
+                script {
+                    echo 'Running tests inside Docker container...'
+                    bat 'docker run --rm praveenaththanayake/estore-server:%BUILD_NUMBER% npm test || exit 1'
+                }
+            }
+        }
+        stage('Login to Docker Hub') {
+            steps {
+                withCredentials([string(credentialsId: 'estore', variable: 'estore')]) {
+                    script {
+                        bat "docker login -u praveenaththanayake -p %estore%"
+                    }
+                }
+            }
+        }
+        stage('Push Image') {
+            steps {
+                bat 'docker push praveenaththanayake/estore-server:%BUILD_NUMBER%'
+            }
+        }
+        stage('Deploy with Docker Compose') {
+            steps {
+                script {
+                    echo 'Deploying application with Docker Compose...'
+                    bat '''
+                        cd server
+                        cd
+                        docker-compose down
+                        docker-compose up -d --build
+                    '''
+                }
+            }
+        }
+    }
+    post {
+        always {
+            bat 'docker logout'
+        }
+        success {
+            echo 'Pipeline executed successfully!'
+        }
+        failure {
+            echo 'Pipeline execution failed. Check logs for details.'
+        }
+    }
+} 
