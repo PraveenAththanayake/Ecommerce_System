@@ -11,22 +11,13 @@ pipeline {
         }
         stage('Build Docker Image') {
             steps {  
-                 bat 'docker build -t praveenaththanayake/estore-server:%BUILD_NUMBER% .'
+                bat 'docker build -t praveenaththanayake/estore-client:%BUILD_NUMBER% -f client/Dockerfile client'
             }
         }
         stage('Install Dependencies') {
             steps {
                 script {
-                    echo 'Installing dependencies inside Docker container...'
-                    bat 'docker run --rm praveenaththanayake/estore-server:%BUILD_NUMBER% npm install'
-                }
-            }
-        }
-        stage('Run Tests') {
-            steps {
-                script {
-                    echo 'Running tests inside Docker container...'
-                    bat 'docker run --rm praveenaththanayake/estore-server:%BUILD_NUMBER% npm test || exit 1'
+                    bat 'docker run --rm praveenaththanayake/estore-client:%BUILD_NUMBER% npm install'
                 }
             }
         }
@@ -41,7 +32,7 @@ pipeline {
         }
         stage('Push Image') {
             steps {
-                bat 'docker push praveenaththanayake/estore-server:%BUILD_NUMBER%'
+                bat 'docker push praveenaththanayake/estore-client:%BUILD_NUMBER%'
             }
         }
         stage('Deploy with Docker Compose') {
@@ -49,7 +40,7 @@ pipeline {
                 script {
                     echo 'Deploying application with Docker Compose...'
                     bat '''
-                        cd server
+                        cd client
                         cd
                         docker-compose down
                         docker-compose up -d --build
