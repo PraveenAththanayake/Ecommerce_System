@@ -1,10 +1,9 @@
-version: "3.8"
 services:
   app:
     image: praveenaththanayake/estore-server:${BUILD_NUMBER}
     ports:
       - "3000:3000"
     volumes:
-      - .:/usr/src/app
+      - ./:/usr/src/app # This will now correctly mount the server directory
     environment:
       NODE_ENV: production
