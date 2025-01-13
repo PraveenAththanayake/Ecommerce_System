@@ -2,7 +2,7 @@ services:
   app:
     image: praveenaththanayake/estore-server:${BUILD_NUMBER}
     ports:
-      - "8000:3000"
+      - "8000:8000"
     volumes:
       - ./:/usr/src/app
     environment:
