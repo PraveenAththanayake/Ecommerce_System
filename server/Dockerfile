@@ -7,8 +7,11 @@ WORKDIR /usr/src/app
 # Copy the contents of the local "server" directory to the root directory of the container
 COPY . .
 
-# Run the npm install command to install the dependencies specified in package.json
+# Install all dependencies, including devDependencies
 RUN npm install
+
+# Install ts-node globally
+RUN npm install -g ts-node
 
 # Install nodemon globally
 RUN npm install -g nodemon
